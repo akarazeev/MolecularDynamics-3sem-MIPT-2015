@@ -50,6 +50,12 @@ double Potential(double x) {
     return res;
 }
 
+double Force(double x) {
+    trace((((6 * pow(sigma/x, 6)) - (12 * pow(sigma/x, 12))) / x))
+    double res = 4 * epsilon * (((6 * pow(sigma/x, 6)) - (12 * pow(sigma/x, 12))) / x); // Заменить экспонентами
+    return res;
+}
+
 void EqMotion() {
     for (int i = 0; i < N; ++i) {
         for (int k = 0; k < 3; ++k) {
@@ -77,19 +83,20 @@ void CalcForces() {
                 rij[k] = r[i][k] - r[j][k];
                 r2 += rij[k] * rij[k];
             }
-            double r1 = sqrt(r2);
-            //            trace(r1)
+            double r1 = sqrt(r2); // Необязательно извлекать корень
+//            trace(r1)
             utot += Potential(r1); // Total Potential
 //            dtrace(r1 ,Potential(r1))
-            //            trace(utot)
-            //            f_r = fr(r); // Force/Range
+//            trace(utot)
             //TODO: Force!!!
-            double f_r = Potential(r1)/r1;
+            double f_r = Force(r1)/r1; // Force/Range
+            dtrace(r1, f_r)
+            
             for (int k = 0; k < 3; ++k) {
                 f[i][k] += f_r * rij[k];
                 f[j][k] -= f_r * rij[k];
-                //                trace(f[i][k])
-                //                trace(f[j][k])
+//                trace(f[i][k])
+//                trace(f[j][k])
             }
         }
     }
@@ -126,7 +133,7 @@ int main() {
     for (int i = 0; i < N; ++i) {
         for (int k = 0; k < 3; ++k) {
             r[i][k] = 1 + rand() % 3;
-            //            trace(r[i][k])
+//            trace(r[i][k])
         }
     }
     for (int i = 0; i < 10; ++i) {
@@ -140,7 +147,7 @@ int main() {
         //        }
         //        printf("\n");
         //        printf("%f %f\n", K, utot);
-        dtrace(K, utot);
+//        dtrace(K, utot);
     }
     return 0;
 }
