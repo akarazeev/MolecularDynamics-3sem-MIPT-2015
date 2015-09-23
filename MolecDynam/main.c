@@ -22,16 +22,15 @@
 #define trace(x) printf("%f\n", x);
 #define dtrace(x, y) printf("%f %f\n", x, y);
 
-const int N = 3;
-const double dt = 0.1;
+const int N = 5;
+const double dt = 0.001;
 
 // Mass of 1 Ar atom
-double mAr = 39.9;
+double mAr = 1;
 double K = 0;
-double momentum = 0;
 double utot = 0;
-double sigma = 3.4;
-double epsilon = 1.04;
+//double sigma = 1;
+//double epsilon = 1;
 
 double v[N][3];
 double f[N][3];
@@ -39,28 +38,27 @@ double r[N][3];
 double m[N];
 
 double Potential(double x) {
-    //    if (x > 4 * sigma) {
-    //        double res = 4 * epsilon * (pow(sigma/x, 12) - pow(sigma/x, 6));
-    //        return res;
-    //    } else {
-    //        double res = 0;
-    //        return res;
-    //    }
-    double res = 4 * epsilon * (pow(sigma/x, 12) - pow(sigma/x, 6));
+//    if (x > 2.5) {
+//        double res = (float)4 * ( (1/(float)pow(x,6)) - (1/(float)pow(x,3)) );
+//        return res;
+//    } else {
+//        double res = -0.0163;
+//        return res;
+//    }
+    double res = (float)4 * ( (1/(float)pow(x,6)) - (1/(float)pow(x,3)) );
     return res;
 }
 
-double Force(double x) {
-    trace((((6 * pow(sigma/x, 6)) - (12 * pow(sigma/x, 12))) / x))
-    double res = 4 * epsilon * (((6 * pow(sigma/x, 6)) - (12 * pow(sigma/x, 12))) / x); // Заменить экспонентами
+double ForceDevByRange(double x) {
+    double res = (float)48 * ( (1/(float)pow(x,7)) - (1/((float)pow(x,4) * 2)) );
     return res;
 }
 
 void EqMotion() {
     for (int i = 0; i < N; ++i) {
         for (int k = 0; k < 3; ++k) {
-            v[i][k] += (f[i][k] * dt) / m[i];
-            r[i][k] += v[i][k] * dt;
+            v[i][k] += ((float)f[i][k] * (float)dt) / (float)m[i];
+            r[i][k] += (float)v[i][k] * (float)dt;
         }
     }
 }
@@ -75,26 +73,26 @@ void ClearForces() {
 
 void CalcForces() {
     double rij[3];
+    rij[0] = 0;
+    rij[1] = 0;
+    rij[2] = 0;
     utot = 0;
+    double r2;
     for (int i = 1; i < N; ++i) {
         for (int j = 0; j < i; ++j) {
-            double r2 = 0; // Squared range
+            // Squared range
+            r2 = 0;
             for (int k = 0; k < 3; ++k) {
                 rij[k] = r[i][k] - r[j][k];
                 r2 += rij[k] * rij[k];
             }
-            double r1 = sqrt(r2); // Необязательно извлекать корень
-//            trace(r1)
-            utot += Potential(r1); // Total Potential
-//            dtrace(r1 ,Potential(r1))
-//            trace(utot)
-            //TODO: Force!!!
-            double f_r = Force(r1)/r1; // Force/Range
-            dtrace(r1, f_r)
-            
+            // Total Potential
+            utot += Potential(r2);
+            // Force/Range
+            double f_r = ForceDevByRange(r2);
             for (int k = 0; k < 3; ++k) {
-                f[i][k] += f_r * rij[k];
-                f[j][k] -= f_r * rij[k];
+                f[i][k] += (float)f_r * (float)rij[k];
+                f[j][k] -= (float)f_r * (float)rij[k];
 //                trace(f[i][k])
 //                trace(f[j][k])
             }
@@ -102,52 +100,103 @@ void CalcForces() {
     }
 }
 
-//FIXME: Works wrong because of Potentials
 void CalcEnergy() {
     K = 0;
     double v2 = 0;
     for (int i = 0; i < N; ++i) {
-        v2 = 0; // Squared Velocity
+        // Squared Velocity
+        v2 = 0;
         for (int k = 0; k < 3; ++k) {
-            v2 += v[i][k] * v[i][k];
+            v2 += (float)v[i][k] * (float)v[i][k];
         }
-        //        trace(v2)
-        K += m[i] * v2 / 2;
-    }
-}
-
-void CalcMomentum() {
-    momentum = 0;
-    for (int i = 0; i < N; ++i) {
-        for (int k = 0; k < 3; ++k) {
-            momentum += m[i] * v[i][k];
-        }
+//        trace(v2)
+        K += (float)m[i] * ((float)v2 / (float)2);
     }
 }
 
 int main() {
-    srand(time(NULL));
-    m[0] = mAr;
-    m[1] = mAr;
-    m[2] = mAr;
+//    srand((unsigned int)time(NULL));
+    FILE* f_en = fopen("/Users/AntonWetret/Documents/Rlang/molec_dynam/energy.csv", "w");
+    FILE* f_coord0 = fopen("/Users/AntonWetret/Documents/Rlang/molec_dynam/data0.csv", "w");
+    FILE* f_coord1 = fopen("/Users/AntonWetret/Documents/Rlang/molec_dynam/data1.csv", "w");
+    FILE* f_coord2 = fopen("/Users/AntonWetret/Documents/Rlang/molec_dynam/data2.csv", "w");
     for (int i = 0; i < N; ++i) {
+        m[i] = mAr;
+    }
+    for (int i = 0; i < N; ++i) {
+        printf("%s\n", "Beginning coordinates");
         for (int k = 0; k < 3; ++k) {
-            r[i][k] = 1 + rand() % 3;
-//            trace(r[i][k])
+            r[i][k] = ((float)rand()/(float)RAND_MAX) * 2;
+            trace(r[i][k])
         }
     }
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10000; ++i) {
         ClearForces();
         CalcForces();
         EqMotion();
         CalcEnergy();
-        CalcMomentum();
-        //        for (int k = 0; k < 3; ++k) {
-        //            printf("%f %f ", v[1][k], r[1][k]);
-        //        }
-        //        printf("\n");
-        //        printf("%f %f\n", K, utot);
-//        dtrace(K, utot);
+//        for (int k = 0; k < 3; ++k) {
+//            printf("%f", r[2][k]);
+//            if (k != 2) {
+//                printf(",");
+//            }
+//        }
+//        printf("\n");
+
+//        for (int k = 0; k < 3; ++k) {
+//            fprintf(f_coord, "%f", r[4][k]);
+//            if (k != 2) {
+//                fprintf(f_coord, ",");
+//            }
+//        }
+//        fprintf(f_coord, "\n");
+        
+        for (int j = 0; j < 3; ++j) {
+            for (int k = 0; k < 3; ++k) {
+                if (j == 0) {
+                    fprintf(f_coord0, "%f", r[j][k]);
+                    if (k != 2) {
+                        fprintf(f_coord0, ",");
+                    }
+                } else if (j == 1) {
+                    fprintf(f_coord1, "%f", r[j][k]);
+                    if (k != 2) {
+                        fprintf(f_coord1, ",");
+                    }
+                } else if (j == 2) {
+                    fprintf(f_coord2, "%f", r[j][k]);
+                    if (k != 2) {
+                        fprintf(f_coord2, ",");
+                    }
+                }
+            }
+            if (j == 0) {
+                fprintf(f_coord0, "\n");
+            } else if (j == 1) {
+                fprintf(f_coord1, "\n");
+            } else if (j == 2) {
+                fprintf(f_coord2, "\n");
+            }
+        }
+        
+//        for (int j = 0; j < N; ++j) {
+//            for (int k = 0; k < 3; ++k) {
+//                printf("%f", r[j][k]);
+//                if (k != 2) {
+//                    printf(",");
+//                }
+//            }
+//            printf("\n");
+//        }
+        
+        dtrace(K, utot)
+//        trace(K + utot)
+//        printf("%f,%i\n", K + utot, i);
+        fprintf(f_en, "%f,%i\n", K + utot, i);
     }
+    fclose(f_en);
+    fclose(f_coord0);
+    fclose(f_coord1);
+    fclose(f_coord2);
     return 0;
 }
