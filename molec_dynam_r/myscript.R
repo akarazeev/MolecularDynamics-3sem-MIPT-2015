@@ -1,0 +1,27 @@
+#plot3d()
+#scatterplot3d()
+#energy <- read.table("~/Documents/Rlang/molec_dynam/energy.csv", quote="\"")
+
+coords0  <- read.csv("data0.csv", header=FALSE)
+coords1  <- read.csv("data1.csv", header=FALSE)
+coords2  <- read.csv("data2.csv", header=FALSE)
+allcoords  <- read.csv("alldata.csv", header=FALSE)
+energy <- read.csv("energy.csv", header=FALSE)
+
+#plot()
+plot(energy$V2, energy$V1, type="h")
+
+#scatterplot3d()
+scatterplot3d(coords0$V1,coords0$V2,coords0$V3)
+par(new=TRUE)
+scatterplot3d(coords1$V1,coords1$V2,coords1$V3)
+par(new=TRUE)
+scatterplot3d(coords2$V1,coords2$V2,coords2$V3)
+
+#plot3d()
+#open3d()
+open3d()
+plot3d(coords0$V1,coords0$V2,coords0$V3, add=TRUE, col="red")
+plot3d(coords1$V1,coords1$V2,coords1$V3, add=TRUE)
+plot3d(coords2$V1,coords2$V2,coords2$V3, add=TRUE, col="green")
+plot3d(allcoords$V1,allcoords$V2,allcoords$V3)
