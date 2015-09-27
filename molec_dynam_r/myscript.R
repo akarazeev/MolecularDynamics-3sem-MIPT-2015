@@ -1,6 +1,8 @@
 #plot3d()
 #scatterplot3d()
 #energy <- read.table("energy.csv", quote="\"")
+library("scatterplot3d", lib.loc="/Library/Frameworks/R.framework/Versions/3.1/Resources/library")
+library("rgl", lib.loc="/Library/Frameworks/R.framework/Versions/3.1/Resources/library")
 
 coords0  <- read.csv("data0.csv", header=FALSE)
 coords1  <- read.csv("data1.csv", header=FALSE)
@@ -9,7 +11,7 @@ allcoords  <- read.csv("alldata.csv", header=FALSE)
 energy <- read.csv("energy.csv", header=FALSE)
 
 #plot()
-plot(energy$V2, energy$V1, type="h")
+plot(energy$V2, energy$V1, type="l")
 
 #scatterplot3d()
 scatterplot3d(coords0$V1,coords0$V2,coords0$V3)
