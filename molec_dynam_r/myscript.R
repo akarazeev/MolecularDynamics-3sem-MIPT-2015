@@ -1,6 +1,6 @@
 #plot3d()
 #scatterplot3d()
-#energy <- read.table("~/Documents/Rlang/molec_dynam/energy.csv", quote="\"")
+#energy <- read.table("energy.csv", quote="\"")
 
 coords0  <- read.csv("data0.csv", header=FALSE)
 coords1  <- read.csv("data1.csv", header=FALSE)
