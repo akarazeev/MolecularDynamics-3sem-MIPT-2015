@@ -22,14 +22,14 @@
 
 #define trace(x) printf("%f\n", x);
 #define dtrace(x, y) printf("%f %f\n", x, y);
-#define PRINT_TO_FILE 0
-#define USE_CUT_OFF 0
+#define PRINT_TO_FILE 1
+#define USE_CUT_OFF 1
 
 const int N = 5;
 const double dt = 0.001;
-const double iterations = 10000;
+const double iterations = 100000;
 
-double rcut = 9;
+double rcut2 = 9;
 double mAr = 1;
 double K = 0;
 double utot = 0;
@@ -45,9 +45,8 @@ double L[3];
 double m[N];
 
 double Potential(double x) {
-    trace(x)
     if (USE_CUT_OFF) {
-        if (x < rcut) {
+        if (x < rcut2) {
             double res = (float)4 * ( (1/(float)pow(x,6)) - (1/(float)pow(x,3)) );
             return res;
         } else {
@@ -69,7 +68,6 @@ void nearest_image() {
     for (int i = 0; i < N; ++i) {
         for (int k = 0; k < 3; ++k) {
             if (r[i][k] > 0) {
-                //???: What is L2 ???
                 rn[i][k] = fmod(r[i][k] + L2[k], L[k]) - L2[k];
             } else {
                 rn[i][k] = fmod(r[i][k] - L2[k], L[k]) + L2[k];
@@ -104,9 +102,7 @@ void CalcForces() {
             // Squared range
             r2 = 0;
             for (int k = 0; k < 3; ++k) {
-//                rij[k] = r[i][k] - r[j][k];
                 rij[k] = rn[i][k] - rn[j][k];
-                //???: What's the difference between L and L2 ???
                 if (rij[k] > L2[k]) {
                     rij[k] -= L[k];
                 } else if (rij[k] < -L2[k]) {
@@ -142,8 +138,11 @@ void CalcEnergy() {
 int main() {
 //    srand((unsigned int)time(NULL));
     for (int k = 0; k < 3; ++k) {
-        L[k] = 15;
-        assert(L[k] > rcut);
+        L[k] = 4.0;
+        assert(L[k] > sqrt(rcut2));
+    }
+    for (int k = 0; k < 3; ++k) {
+        L2[k] = L[k]/2.0;
     }
     FILE* f_en;
     FILE* f_coord0;
@@ -159,10 +158,10 @@ int main() {
         m[i] = mAr;
     }
     for (int i = 0; i < N; ++i) {
-        printf("%s\n", "Beginning coordinates");
+//        printf("%s\n", "Beginning coordinates");
         for (int k = 0; k < 3; ++k) {
             r[i][k] = ((float)rand()/(float)RAND_MAX) * 2;
-            trace(r[i][k])
+//            trace(r[i][k])
         }
     }
     for (int i = 0; i < iterations; ++i) {
@@ -189,30 +188,30 @@ int main() {
 //        fprintf(f_coord, "\n");
         
         if (PRINT_TO_FILE) {
-            for (int j = 0; j < 3; ++j) {
+            for (int j = 2; j < 5; ++j) {
                 for (int k = 0; k < 3; ++k) {
-                    if (j == 0) {
-                        fprintf(f_coord0, "%f", r[j][k]);
+                    if (j == 2) {
+                        fprintf(f_coord0, "%f", rn[j][k]);
                         if (k != 2) {
                             fprintf(f_coord0, ",");
                         }
-                    } else if (j == 1) {
-                        fprintf(f_coord1, "%f", r[j][k]);
+                    } else if (j == 3) {
+                        fprintf(f_coord1, "%f", rn[j][k]);
                         if (k != 2) {
                             fprintf(f_coord1, ",");
                         }
-                    } else if (j == 2) {
-                        fprintf(f_coord2, "%f", r[j][k]);
+                    } else if (j == 4) {
+                        fprintf(f_coord2, "%f", rn[j][k]);
                         if (k != 2) {
                             fprintf(f_coord2, ",");
                         }
                     }
                 }
-                if (j == 0) {
+                if (j == 2) {
                     fprintf(f_coord0, "\n");
-                } else if (j == 1) {
+                } else if (j == 3) {
                     fprintf(f_coord1, "\n");
-                } else if (j == 2) {
+                } else if (j == 4) {
                     fprintf(f_coord2, "\n");
                 }
             }
@@ -228,7 +227,7 @@ int main() {
 //            printf("\n");
 //        }
         
-        dtrace(K, utot)
+//        dtrace(K, utot)
         if (PRINT_TO_FILE) {
             fprintf(f_en, "%f,%i\n", K + utot, i);
         }
@@ -238,6 +237,7 @@ int main() {
         fclose(f_coord0);
         fclose(f_coord1);
         fclose(f_coord2);
+        printf("Done!\n");
     }
     return 0;
 }
