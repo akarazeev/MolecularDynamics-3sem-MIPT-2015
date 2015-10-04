@@ -1,0 +1,5 @@
+energy <- read.csv("energy.csv", header=FALSE)
+png('rplotic.png')
+plot(energy$V2, energy$V1, type="l", main=abs(max(abs(energy$V1))/mean(energy$V1)))
+abline(a=mean(energy$V1),b=0)
+dev.off()
