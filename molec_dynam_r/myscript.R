@@ -11,7 +11,9 @@ allcoords  <- read.csv("alldata.csv", header=FALSE)
 energy <- read.csv("energy.csv", header=FALSE)
 
 #plot()
-plot(energy$V2, energy$V1, type="l")
+plot(energy$V2, energy$V1, type="l", main=max(abs(energy$V1))/mean(energy$V1))
+abline(a=mean(energy$V1),b=0)
+print(max(energy$V1)/mean(energy$V1))
 
 #scatterplot3d()
 scatterplot3d(coords0$V1,coords0$V2,coords0$V3)
