@@ -120,6 +120,7 @@ void CalcForces() {
 //                printf("R2 %f\n", r2);
             }
             double f_r = 0;
+//            trace(r2)
             if (r2 != 0) {
                 utot += Potential(r2);
                 f_r = ForceDevByRange(r2);
@@ -158,7 +159,7 @@ void CalcTemp() {
 }
 
 int main() {
-    srand((unsigned int)time(NULL));
+//    srand((unsigned int)time(NULL));
     for (int k = 0; k < 3; ++k) {
         L[k] = length;
         L2[k] = L[k]/2.0;
@@ -170,6 +171,7 @@ int main() {
     FILE* f_coord1;
     FILE* f_coord2;
     FILE* f_xyz;
+    FILE* f_velocity;
     FILE* f_init_coord;
     FILE* f_init_coord_r;
     if (PRINT_TO_FILE || READ_INIT) {
@@ -177,6 +179,7 @@ int main() {
         f_init_coord_r = fopen(READ_FROM, "r");
         f_xyz = fopen("MolecDynam/t.xyz", "w");
         f_temp = fopen("molec_dynam_r/temp.csv", "w");
+        f_velocity = fopen("molec_dynam_r/velocity.csv", "w");
         f_en = fopen("molec_dynam_r/energy.csv", "w");
         f_coord0 = fopen("molec_dynam_r/data0.csv", "w");
         f_coord1 = fopen("molec_dynam_r/data1.csv", "w");
@@ -219,6 +222,7 @@ int main() {
                 }
                 fprintf(f_init_coord, "\n");
             }
+            fclose(f_init_coord);
         }
     }
     
@@ -231,6 +235,16 @@ int main() {
         CalcTemp();
         
         if (PRINT_TO_FILE) {
+            if (i == iterations/2) {
+                for (int j = 0; j < N; ++j) {
+                    double v2 = 0;
+                    for (int k = 0; k < 3; ++k) {
+                        v2 += (float)v[j][k] * (float)v[j][k];
+                    }
+                    fprintf(f_velocity, "%f\n", sqrt(v2));
+                }
+                fclose(f_velocity);
+            }
             if (i > iterations-500) {
                 fprintf(f_xyz, "%d\n\n", N);
                 for (int i = 0; i < N; ++i) {
@@ -268,9 +282,8 @@ int main() {
                     fprintf(f_coord2, "\n");
                 }
             }
-//            fprintf(f_en, "%f,%i\n", K + utot, i);
             if (i > 4) {
-                fprintf(f_en, "%f,%i\n", K, i);
+                fprintf(f_en, "%f,%i\n", K + utot, i);
                 fprintf(f_temp, "%f,%i\n", Temp, i);
             }
         }
@@ -290,7 +303,6 @@ int main() {
         fclose(f_coord1);
         fclose(f_coord2);
         fclose(f_init_coord_r);
-        fclose(f_init_coord);
         fclose(f_temp);
         printf("Print to file: Done!\n");
     }

@@ -34,3 +34,10 @@ plot3d(coords1$V1,coords1$V2,coords1$V3)
 plot3d(coords2$V1,coords2$V2,coords2$V3, col="green")
 
 plot3d(allcoords$V1,allcoords$V2,allcoords$V3)
+
+# Velocity
+vel <- read.csv("velocity.csv", header=FALSE)
+hist(vel$V1)
+par(new=TRUE)
+plot(density(vel$V1))
+
