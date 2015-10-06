@@ -4,9 +4,6 @@
 library("scatterplot3d", lib.loc="/Library/Frameworks/R.framework/Versions/3.1/Resources/library")
 library("rgl", lib.loc="/Library/Frameworks/R.framework/Versions/3.1/Resources/library")
 
-coords0  <- read.csv("data0.csv", header=FALSE)
-coords1  <- read.csv("data1.csv", header=FALSE)
-coords2  <- read.csv("data2.csv", header=FALSE)
 allcoords  <- read.csv("alldata.csv", header=FALSE)
 energy <- read.csv("energy.csv", header=FALSE)
 
@@ -37,7 +34,7 @@ plot3d(allcoords$V1,allcoords$V2,allcoords$V3)
 
 # Velocity
 vel <- read.csv("velocity.csv", header=FALSE)
-hist(vel$V1)
+hist(vel$V1, breaks=10)
 par(new=TRUE)
 plot(density(vel$V1))
 

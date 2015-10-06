@@ -24,17 +24,16 @@
 #define dtrace(x, y) printf("%f %f\n", x, y);
 
 #define PRINT_TO_FILE 1
-#define USE_CUT_OFF 1
-#define READ_INIT 1
+#define READ_INIT 0
 #define BERENDSEN 1
 
 const char* READ_FROM = "MolecDynam/init_coord_N=100.xyz";
 
-const double Temp0 = 100.0;
-const int N = 100;
+const double Temp0 = 200.0;
+const int N = 64;
 const double dt = 0.001;
-const double iterations = 30000;
-double length = 10.0;
+const double iterations = 10000;
+const double density = 0.1;
 
 double rcut2 = 9;
 double mAr = 1;
@@ -54,16 +53,11 @@ double m[N];
 int flag = 0;
 
 double Potential(double x) {
-    if (USE_CUT_OFF) {
-        if (x < rcut2) {
-            double res = 4.0 * ( (1/(float)pow(x,6)) - (1/(float)pow(x,3)) );
-            return res;
-        } else {
-            double res = 0;
-            return res;
-        }
-    } else {
+    if (x < rcut2) {
         double res = 4.0 * ( (1/(float)pow(x,6)) - (1/(float)pow(x,3)) );
+        return res;
+    } else {
+        double res = 0;
         return res;
     }
 }
@@ -164,26 +158,32 @@ void CalcTemp() {
 }
 
 void Thermostat() {
-    double lambda = sqrt(Temp0/Temp);
-    if (fabs(Temp - Temp0) < 0.1) {
-        flag = 1;
-    }
-    if (!flag) {
-        trace(lambda)
-        for (int i = 0; i < N; ++i) {
-            for (int k = 0; k < 3; ++k) {
-                v[i][k] *= lambda;
+    if (BERENDSEN) {
+        double lambda = sqrt(Temp0/Temp);
+        if (fabs(Temp - Temp0) < 0.1) {
+            flag = 1;
+        }
+        if (!flag) {
+//            trace(lambda)
+            for (int i = 0; i < N; ++i) {
+                for (int k = 0; k < 3; ++k) {
+                    v[i][k] *= lambda;
+                }
             }
         }
     }
 }
 
 int main() {
-//    srand((unsigned int)time(NULL));
+    srand((unsigned int)time(NULL));
+    double length = powf(N/density, 1.0/3.0);
     for (int k = 0; k < 3; ++k) {
         L[k] = length;
         L2[k] = L[k]/2.0;
         assert(L[k] > sqrt(rcut2));
+    }
+    for (int i = 0; i < N; ++i) {
+        m[i] = mAr;
     }
     FILE* f_en;
     FILE* f_kin;
@@ -203,15 +203,54 @@ int main() {
         f_kin = fopen("molec_dynam_r/kinetic.csv", "w");
         f_poten = fopen("molec_dynam_r/poten.csv", "w");
     }
-    for (int i = 0; i < N; ++i) {
-        m[i] = mAr;
-    }
     if (!READ_INIT) {
+//        for (int i = 0; i < N; ++i) {
+//            for (int k = 0; k < 3; ++k) {
+//                r[i][k] = ((float)rand()/(float)RAND_MAX) * length;
+//            }
+//        }
+        
+        // Make Initial Coordinates
+        double init[3];
+        for (int i = 0; i < 3; ++i) {
+            init[i] = -L2[0];
+        }
+        double step = length / powf(N, 1.0/3.0);
+        int quant = powf(N, 1.0/3.0);
+        
         for (int i = 0; i < N; ++i) {
             for (int k = 0; k < 3; ++k) {
-                r[i][k] = ((float)rand()/(float)RAND_MAX) * length;
+                r[i][k] = init[k];
+            }
+//            if (init[0] < L2[0]) {
+//                init[0] += step;
+//            }
+//            if (init[0] >= L2[0]) {
+//                init[0] = -L2[0];
+//                init[1] = +step;
+//            }
+//            if (init[1] >= L2[0]) {
+//                init[0] = -L2[0];
+//                init[1] = -L2[0];
+//                init[2] += step;
+//            }
+            init[0] += step;
+            if ((i+1) % (quant*quant) == 0) {
+                init[0] = -L2[0];
+                init[1] = -L2[0];
+                init[2] += step;
+            } else if ((i+1) % quant == 0) {
+                init[0] = -L2[0];
+                init[1] += step;
             }
         }
+        // Make Initial Velocities
+        for (int i = 0; i < N; ++i) {
+            for (int k = 0; k < 3; ++k) {
+                v[i][k] = 1 - (((float)rand()/(float)RAND_MAX)*2);
+            }
+        }
+        
     }
     if (PRINT_TO_FILE || READ_INIT) {
         if (READ_INIT) {
@@ -231,7 +270,7 @@ int main() {
                 fscanf(f_init_coord_r, "%c", &c);
             }
         } else {
-            // Initial Coordinates
+            // Print Coordinates
             fprintf(f_init_coord, "%d\n\n", N);
             for (int i = 0; i < N; ++i) {
                 fprintf(f_init_coord, "%c ", (char) (97+(i%26)));
