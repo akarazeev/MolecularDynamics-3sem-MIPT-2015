@@ -26,11 +26,14 @@
 #define PRINT_TO_FILE 1
 #define USE_CUT_OFF 1
 #define READ_INIT 1
+#define BERENDSEN 1
+
 const char* READ_FROM = "MolecDynam/init_coord_N=100.xyz";
 
+const double Temp0 = 100.0;
 const int N = 100;
 const double dt = 0.001;
-const double iterations = 10000;
+const double iterations = 30000;
 double length = 10.0;
 
 double rcut2 = 9;
@@ -47,6 +50,8 @@ double rn[N][3];
 double L2[3];
 double L[3];
 double m[N];
+
+int flag = 0;
 
 double Potential(double x) {
     if (USE_CUT_OFF) {
@@ -125,8 +130,8 @@ void CalcForces() {
                 utot += Potential(r2);
                 f_r = ForceDevByRange(r2);
             } else {
-                utot += Potential(1);
-                f_r = ForceDevByRange(1);
+                utot += Potential(1.0);
+                f_r = ForceDevByRange(1.0);
             }
             for (int k = 0; k < 3; ++k) {
 //                printf("F/R %f\n", f_r);
@@ -155,7 +160,22 @@ void CalcEnergy() {
 }
 
 void CalcTemp() {
-    Temp = ((K / N) / 3) * (2 * eps_dev_by_k_boltz);
+    Temp = ((K / N) / 3.0) * (2.0 * eps_dev_by_k_boltz);
+}
+
+void Thermostat() {
+    double lambda = sqrt(Temp0/Temp);
+    if (fabs(Temp - Temp0) < 0.1) {
+        flag = 1;
+    }
+    if (!flag) {
+        trace(lambda)
+        for (int i = 0; i < N; ++i) {
+            for (int k = 0; k < 3; ++k) {
+                v[i][k] *= lambda;
+            }
+        }
+    }
 }
 
 int main() {
@@ -166,10 +186,9 @@ int main() {
         assert(L[k] > sqrt(rcut2));
     }
     FILE* f_en;
+    FILE* f_kin;
+    FILE* f_poten;
     FILE* f_temp;
-    FILE* f_coord0;
-    FILE* f_coord1;
-    FILE* f_coord2;
     FILE* f_xyz;
     FILE* f_velocity;
     FILE* f_init_coord;
@@ -181,9 +200,8 @@ int main() {
         f_temp = fopen("molec_dynam_r/temp.csv", "w");
         f_velocity = fopen("molec_dynam_r/velocity.csv", "w");
         f_en = fopen("molec_dynam_r/energy.csv", "w");
-        f_coord0 = fopen("molec_dynam_r/data0.csv", "w");
-        f_coord1 = fopen("molec_dynam_r/data1.csv", "w");
-        f_coord2 = fopen("molec_dynam_r/data2.csv", "w");
+        f_kin = fopen("molec_dynam_r/kinetic.csv", "w");
+        f_poten = fopen("molec_dynam_r/poten.csv", "w");
     }
     for (int i = 0; i < N; ++i) {
         m[i] = mAr;
@@ -233,6 +251,7 @@ int main() {
         EqMotion();
         CalcEnergy();
         CalcTemp();
+        Thermostat();
         
         if (PRINT_TO_FILE) {
             if (i == iterations/2) {
@@ -255,35 +274,10 @@ int main() {
                     fprintf(f_xyz, "\n");
                 }
             }
-            for (int j = 2; j < 5; ++j) {
-                for (int k = 0; k < 3; ++k) {
-                    if (j == 2) {
-                        fprintf(f_coord0, "%f", rn[j][k]);
-                        if (k != 2) {
-                            fprintf(f_coord0, ",");
-                        }
-                    } else if (j == 3) {
-                        fprintf(f_coord1, "%f", rn[j][k]);
-                        if (k != 2) {
-                            fprintf(f_coord1, ",");
-                        }
-                    } else if (j == 4) {
-                        fprintf(f_coord2, "%f", rn[j][k]);
-                        if (k != 2) {
-                            fprintf(f_coord2, ",");
-                        }
-                    }
-                }
-                if (j == 2) {
-                    fprintf(f_coord0, "\n");
-                } else if (j == 3) {
-                    fprintf(f_coord1, "\n");
-                } else if (j == 4) {
-                    fprintf(f_coord2, "\n");
-                }
-            }
             if (i > 4) {
                 fprintf(f_en, "%f,%i\n", K + utot, i);
+                fprintf(f_kin, "%f,%i\n", K, i);
+                fprintf(f_poten, "%f,%i\n", utot, i);
                 fprintf(f_temp, "%f,%i\n", Temp, i);
             }
         }
@@ -299,9 +293,8 @@ int main() {
     if (PRINT_TO_FILE) {
         fclose(f_xyz);
         fclose(f_en);
-        fclose(f_coord0);
-        fclose(f_coord1);
-        fclose(f_coord2);
+        fclose(f_poten);
+        fclose(f_kin);
         fclose(f_init_coord_r);
         fclose(f_temp);
         printf("Print to file: Done!\n");

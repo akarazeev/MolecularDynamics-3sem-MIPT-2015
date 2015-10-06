@@ -4,3 +4,5 @@
 r -f ter.R
 open energy.png
 open temp.png
+open kinetic.png
+open poten.png
