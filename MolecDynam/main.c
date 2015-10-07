@@ -30,7 +30,7 @@
 const char* READ_FROM = "MolecDynam/init_coord_N=100.xyz";
 
 const double Temp0 = 200.0;
-const int N = 64;
+const int N = 125;
 const double dt = 0.001;
 const double iterations = 10000;
 const double density = 0.1;
@@ -303,7 +303,8 @@ int main() {
                 }
                 fclose(f_velocity);
             }
-            if (i > iterations-500) {
+//            if (i > iterations-500) {
+            if (i < 700) {
                 fprintf(f_xyz, "%d\n\n", N);
                 for (int i = 0; i < N; ++i) {
                     fprintf(f_xyz, "%c ", (char) (97+(i%26)));
