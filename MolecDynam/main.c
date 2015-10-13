@@ -6,14 +6,6 @@
 //  Copyright (c) 2015 Anton Karazeev. All rights reserved.
 //
 
-/*
- Element - Ar
- sigma = 3.40 angstrem = 3.40 * E-10 m
- epsilon = 1.040 * E-2 eV = 1.664 * E-21
- 1u = 1.66 * E-27 kg
- mAr = 39.9u
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -29,15 +21,14 @@
 
 const char* READ_FROM = "MolecDynam/init_coord_N=100.xyz";
 
-const double Temp0 = 103;
-const int N = 125;
+const double Temp0 = 1.3;
+const int N = 64;
 const double dt = 0.001;
-const double iterations = 10000;
+const double iterations = 20000;
 const double density = 0.1;
 
 double rcut2 = 9;
 double mAr = 1;
-double eps_dev_by_k_boltz = 121;
 double K = 0;
 double Temp = 0;
 double utot = 0;
@@ -119,14 +110,8 @@ void CalcForces() {
                 //                printf("R2 %f\n", r2);
             }
             double f_r = 0;
-            //            trace(r2)
-            if (r2 != 0) {
-                utot += Potential(r2);
-                f_r = ForceDevByRange(r2);
-            } else {
-                utot += Potential(1.0);
-                f_r = ForceDevByRange(1.0);
-            }
+            utot += Potential(r2);
+            f_r = ForceDevByRange(r2);
             for (int k = 0; k < 3; ++k) {
                 //                printf("F/R %f\n", f_r);
                 //                printf("Rij %f\n", rij[k]);
@@ -154,18 +139,19 @@ void CalcEnergy() {
 }
 
 void CalcTemp() {
-    Temp = ((K / N) / 3.0) * (2.0 * eps_dev_by_k_boltz);
+    Temp = 2.0 * ((K / N) / 3.0);
 }
 
-void Thermostat() {
+void Thermostat(int cur_iter) {
     if (USE_BERENDSEN) {
-        double tau = 1;
+        double tau = 0.001;
         double lambda = sqrt(1 + ( (dt/tau) * ((Temp0/Temp) - 1) ));
-        if (fabs(Temp - Temp0) < 0.1) {
+        if (fabs(Temp - Temp0) < 0.1 && cur_iter > 300) {
             flag = 1;
+            printf("%d\n", cur_iter);
         }
-        if (!flag) {
-//            trace(lambda)
+                if (!flag) {
+//        if (cur_iter < iterations/2) {
             for (int i = 0; i < N; ++i) {
                 for (int k = 0; k < 3; ++k) {
                     v[i][k] *= lambda;
@@ -206,16 +192,11 @@ int main() {
         f_poten = fopen("molec_dynam_r/poten.csv", "w");
     }
     if (!READ_INIT) {
-        //        for (int i = 0; i < N; ++i) {
-        //            for (int k = 0; k < 3; ++k) {
-        //                r[i][k] = ((float)rand()/(float)RAND_MAX) * length;
-        //            }
-        //        }
-        
         // Make Initial Coordinates
         double init[3];
         
-        int quant = powf(N, 1.0/3.0); // Quantity of atoms pro line
+        // Quantity of atoms pro line
+        int quant = powf(N, 1.0/3.0);
         double step = L[0] / quant;
         double ic = (step/2.0) - L2[0];
         
@@ -240,8 +221,7 @@ int main() {
         // Make Initial Velocities
         for (int i = 0; i < N; ++i) {
             for (int k = 0; k < 3; ++k) {
-//                v[i][k] = 1 - (((float)rand()/(float)RAND_MAX)*2);
-                v[i][k] = 0.1 - (((float)rand()/(float)RAND_MAX)*0.2);
+                v[i][k] = 1 - (((float)rand()/(float)RAND_MAX)*2);
             }
         }
         
@@ -284,10 +264,11 @@ int main() {
         EqMotion();
         CalcEnergy();
         CalcTemp();
-        Thermostat();
+        Thermostat(i);
         
         if (PRINT_TO_FILE) {
-            if (i == iterations/2) {
+            //            if (i == iterations/2) {
+            if (i > iterations/2) {
                 for (int j = 0; j < N; ++j) {
                     double v2 = 0;
                     for (int k = 0; k < 3; ++k) {
@@ -295,7 +276,7 @@ int main() {
                     }
                     fprintf(f_velocity, "%f\n", sqrt(v2));
                 }
-                fclose(f_velocity);
+                //                fclose(f_velocity);
             }
             //            if (i > iterations-500) {
             if (i < 500) {
@@ -308,12 +289,12 @@ int main() {
                     fprintf(f_xyz, "\n");
                 }
             }
-//            if (i > 4) {
-                fprintf(f_en, "%f,%i\n", K + utot, i);
-                fprintf(f_kin, "%f,%i\n", K, i);
-                fprintf(f_poten, "%f,%i\n", utot, i);
-                fprintf(f_temp, "%f,%i\n", Temp, i);
-//            }
+            //            if (i > 4) {
+            fprintf(f_en, "%f,%i\n", K + utot, i);
+            fprintf(f_kin, "%f,%i\n", K, i);
+            fprintf(f_poten, "%f,%i\n", utot, i);
+            fprintf(f_temp, "%f,%i\n", Temp, i);
+            //            }
         }
         
         if (i*2 == iterations) {
@@ -325,6 +306,7 @@ int main() {
         assert(K != INFINITY);
     }
     if (PRINT_TO_FILE) {
+        fclose(f_velocity);
         fclose(f_xyz);
         fclose(f_en);
         fclose(f_poten);

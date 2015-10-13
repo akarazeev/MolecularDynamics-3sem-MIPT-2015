@@ -7,3 +7,4 @@ r -f ter.R
 #open poten.png
 open temp.png
 open compare.png
+open vel.png

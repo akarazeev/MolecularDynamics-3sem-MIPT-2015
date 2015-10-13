@@ -7,10 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		524FC88E1BCD032800AA2817 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 524FC88D1BCD032800AA2817 /* main.c */; };
 		529BCE531BAA1CFB001DB09D /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 529BCE521BAA1CFB001DB09D /* main.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		524FC8891BCD032800AA2817 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		529BCE4D1BAA1CFB001DB09D /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -23,11 +33,20 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		524FC88B1BCD032800AA2817 /* OppositeAtoms */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = OppositeAtoms; sourceTree = BUILT_PRODUCTS_DIR; };
+		524FC88D1BCD032800AA2817 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		529BCE4F1BAA1CFB001DB09D /* MolecDynam */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MolecDynam; sourceTree = BUILT_PRODUCTS_DIR; };
 		529BCE521BAA1CFB001DB09D /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		524FC8881BCD032800AA2817 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		529BCE4C1BAA1CFB001DB09D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -38,10 +57,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		524FC88C1BCD032800AA2817 /* OppositeAtoms */ = {
+			isa = PBXGroup;
+			children = (
+				524FC88D1BCD032800AA2817 /* main.c */,
+			);
+			path = OppositeAtoms;
+			sourceTree = "<group>";
+		};
 		529BCE461BAA1CFB001DB09D = {
 			isa = PBXGroup;
 			children = (
 				529BCE511BAA1CFB001DB09D /* MolecDynam */,
+				524FC88C1BCD032800AA2817 /* OppositeAtoms */,
 				529BCE501BAA1CFB001DB09D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				529BCE4F1BAA1CFB001DB09D /* MolecDynam */,
+				524FC88B1BCD032800AA2817 /* OppositeAtoms */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -65,6 +94,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		524FC88A1BCD032800AA2817 /* OppositeAtoms */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 524FC8911BCD032800AA2817 /* Build configuration list for PBXNativeTarget "OppositeAtoms" */;
+			buildPhases = (
+				524FC8871BCD032800AA2817 /* Sources */,
+				524FC8881BCD032800AA2817 /* Frameworks */,
+				524FC8891BCD032800AA2817 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OppositeAtoms;
+			productName = OppositeAtoms;
+			productReference = 524FC88B1BCD032800AA2817 /* OppositeAtoms */;
+			productType = "com.apple.product-type.tool";
+		};
 		529BCE4E1BAA1CFB001DB09D /* MolecDynam */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 529BCE561BAA1CFB001DB09D /* Build configuration list for PBXNativeTarget "MolecDynam" */;
@@ -91,6 +137,9 @@
 				LastUpgradeCheck = 0640;
 				ORGANIZATIONNAME = "Anton Karazeev";
 				TargetAttributes = {
+					524FC88A1BCD032800AA2817 = {
+						CreatedOnToolsVersion = 7.0.1;
+					};
 					529BCE4E1BAA1CFB001DB09D = {
 						CreatedOnToolsVersion = 6.4;
 					};
@@ -109,11 +158,20 @@
 			projectRoot = "";
 			targets = (
 				529BCE4E1BAA1CFB001DB09D /* MolecDynam */,
+				524FC88A1BCD032800AA2817 /* OppositeAtoms */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		524FC8871BCD032800AA2817 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				524FC88E1BCD032800AA2817 /* main.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		529BCE4B1BAA1CFB001DB09D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -125,6 +183,23 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		524FC88F1BCD032800AA2817 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_TESTABILITY = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		524FC8901BCD032800AA2817 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		529BCE541BAA1CFB001DB09D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -219,6 +294,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		524FC8911BCD032800AA2817 /* Build configuration list for PBXNativeTarget "OppositeAtoms" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				524FC88F1BCD032800AA2817 /* Debug */,
+				524FC8901BCD032800AA2817 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		529BCE4A1BAA1CFB001DB09D /* Build configuration list for PBXProject "MolecDynam" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -235,6 +318,7 @@
 				529BCE581BAA1CFB001DB09D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

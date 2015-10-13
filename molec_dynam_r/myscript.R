@@ -53,5 +53,13 @@ plot3d(allcoords$V1,allcoords$V2,allcoords$V3)
 vel <- read.csv("velocity.csv", header=FALSE)
 hist(vel$V1, breaks=10)
 par(new=TRUE)
-plot(density(vel$V1))
+plot( density(vel$V1))
 
+# Multiple plots
+par(mfrow = c(2, 3))
+par(cex = 0.6)
+par(mar = c(3, 3, 0, 0), oma = c(1, 1, 1, 1))
+for (i in 1:6) {
+  plot(1, 1, type = "n")
+  mtext(letters[i], side = 3, line = -1, adj = 0.1, cex = 0.6)
+}
