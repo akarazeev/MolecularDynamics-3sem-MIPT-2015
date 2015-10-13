@@ -25,15 +25,15 @@
 
 #define PRINT_TO_FILE 1
 #define READ_INIT 0
-#define BERENDSEN 1
+#define USE_BERENDSEN 1
 
 const char* READ_FROM = "MolecDynam/init_coord_N=100.xyz";
 
-const double Temp0 = 200.0;
+const double Temp0 = 100.0;
 const int N = 125;
 const double dt = 0.001;
-const double iterations = 10000;
-const double density = 0.1;
+const double iterations = 5000;
+const double density = 4.0;
 
 double rcut2 = 9;
 double mAr = 1;
@@ -82,11 +82,11 @@ void nearest_image() {
 void EqMotion() {
     for (int i = 0; i < N; ++i) {
         for (int k = 0; k < 3; ++k) {
-//            printf("F %f\n", f[i][k]);
+            //            printf("F %f\n", f[i][k]);
             v[i][k] += ((float)f[i][k] * (float)dt) / (float)m[i];
-//            printf("V %f\n", v[i][k]);
+            //            printf("V %f\n", v[i][k]);
             r[i][k] += (float)v[i][k] * (float)dt;
-//            printf("R %f\n", r[i][k]);
+            //            printf("R %f\n", r[i][k]);
             assert(r[i][k] == r[i][k]);
         }
     }
@@ -108,7 +108,7 @@ void CalcForces() {
         for (int j = 0; j < i; ++j) {
             r2 = 0;
             for (int k = 0; k < 3; ++k) {
-//                printf("Rn %f %f %d %d\n", rn[i][k], rn[j][k], i, j);
+                //                printf("Rn %f %f %d %d\n", rn[i][k], rn[j][k], i, j);
                 rij[k] = rn[i][k] - rn[j][k];
                 if (rij[k] > L2[k]) {
                     rij[k] -= L[k];
@@ -116,10 +116,10 @@ void CalcForces() {
                     rij[k] += L[k];
                 }
                 r2 += rij[k] * rij[k];
-//                printf("R2 %f\n", r2);
+                //                printf("R2 %f\n", r2);
             }
             double f_r = 0;
-//            trace(r2)
+            //            trace(r2)
             if (r2 != 0) {
                 utot += Potential(r2);
                 f_r = ForceDevByRange(r2);
@@ -128,8 +128,8 @@ void CalcForces() {
                 f_r = ForceDevByRange(1.0);
             }
             for (int k = 0; k < 3; ++k) {
-//                printf("F/R %f\n", f_r);
-//                printf("Rij %f\n", rij[k]);
+                //                printf("F/R %f\n", f_r);
+                //                printf("Rij %f\n", rij[k]);
                 assert(f_r == f_r);
                 f[i][k] += (float)f_r * (float)rij[k];
                 f[j][k] -= (float)f_r * (float)rij[k];
@@ -144,9 +144,9 @@ void CalcEnergy() {
     for (int i = 0; i < N; ++i) {
         v2 = 0;
         for (int k = 0; k < 3; ++k) {
-//            printf("V %f\n", v[i][k]);
+            //            printf("V %f\n", v[i][k]);
             v2 += (float)v[i][k] * (float)v[i][k];
-//            printf("V2 %f\n", v2);
+            //            printf("V2 %f\n", v2);
         }
         K += (float)m[i] * ((float)v2 / 2.0);
         assert(K != INFINITY);
@@ -158,13 +158,13 @@ void CalcTemp() {
 }
 
 void Thermostat() {
-    if (BERENDSEN) {
+    if (USE_BERENDSEN) {
         double lambda = sqrt(Temp0/Temp);
         if (fabs(Temp - Temp0) < 0.1) {
             flag = 1;
         }
         if (!flag) {
-//            trace(lambda)
+            //            trace(lambda)
             for (int i = 0; i < N; ++i) {
                 for (int k = 0; k < 3; ++k) {
                     v[i][k] *= lambda;
@@ -177,6 +177,7 @@ void Thermostat() {
 int main() {
     srand((unsigned int)time(NULL));
     double length = powf(N/density, 1.0/3.0);
+    
     for (int k = 0; k < 3; ++k) {
         L[k] = length;
         L2[k] = L[k]/2.0;
@@ -204,43 +205,34 @@ int main() {
         f_poten = fopen("molec_dynam_r/poten.csv", "w");
     }
     if (!READ_INIT) {
-//        for (int i = 0; i < N; ++i) {
-//            for (int k = 0; k < 3; ++k) {
-//                r[i][k] = ((float)rand()/(float)RAND_MAX) * length;
-//            }
-//        }
+        //        for (int i = 0; i < N; ++i) {
+        //            for (int k = 0; k < 3; ++k) {
+        //                r[i][k] = ((float)rand()/(float)RAND_MAX) * length;
+        //            }
+        //        }
         
         // Make Initial Coordinates
         double init[3];
+        
+        int quant = powf(N, 1.0/3.0); // Quantity of atoms pro line
+        double step = L[0] / quant;
+        double ic = (step/2.0) - L2[0];
+        
         for (int i = 0; i < 3; ++i) {
-            init[i] = -L2[0];
+            init[i] = ic;
         }
-        double step = length / powf(N, 1.0/3.0);
-        int quant = powf(N, 1.0/3.0);
         
         for (int i = 0; i < N; ++i) {
             for (int k = 0; k < 3; ++k) {
                 r[i][k] = init[k];
             }
-//            if (init[0] < L2[0]) {
-//                init[0] += step;
-//            }
-//            if (init[0] >= L2[0]) {
-//                init[0] = -L2[0];
-//                init[1] = +step;
-//            }
-//            if (init[1] >= L2[0]) {
-//                init[0] = -L2[0];
-//                init[1] = -L2[0];
-//                init[2] += step;
-//            }
             init[0] += step;
             if ((i+1) % (quant*quant) == 0) {
-                init[0] = -L2[0];
-                init[1] = -L2[0];
+                init[0] = ic;
+                init[1] = ic;
                 init[2] += step;
             } else if ((i+1) % quant == 0) {
-                init[0] = -L2[0];
+                init[0] = ic;
                 init[1] += step;
             }
         }
@@ -270,7 +262,7 @@ int main() {
                 fscanf(f_init_coord_r, "%c", &c);
             }
         } else {
-            // Print Coordinates
+            // Print Coordinates to File
             fprintf(f_init_coord, "%d\n\n", N);
             for (int i = 0; i < N; ++i) {
                 fprintf(f_init_coord, "%c ", (char) (97+(i%26)));
@@ -303,8 +295,8 @@ int main() {
                 }
                 fclose(f_velocity);
             }
-//            if (i > iterations-500) {
-            if (i < 700) {
+            //            if (i > iterations-500) {
+            if (i < 500) {
                 fprintf(f_xyz, "%d\n\n", N);
                 for (int i = 0; i < N; ++i) {
                     fprintf(f_xyz, "%c ", (char) (97+(i%26)));
@@ -321,13 +313,13 @@ int main() {
                 fprintf(f_temp, "%f,%i\n", Temp, i);
             }
         }
-
+        
         if (i*2 == iterations) {
             trace(Temp)
             dtrace(K, utot)
         }
-//        trace(Temp)
-//        dtrace(K, utot)
+        //        trace(Temp)
+        //        dtrace(K, utot)
         assert(K != INFINITY);
     }
     if (PRINT_TO_FILE) {

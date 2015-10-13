@@ -4,8 +4,21 @@
 library("scatterplot3d", lib.loc="/Library/Frameworks/R.framework/Versions/3.1/Resources/library")
 library("rgl", lib.loc="/Library/Frameworks/R.framework/Versions/3.1/Resources/library")
 
-allcoords  <- read.csv("alldata.csv", header=FALSE)
 energy <- read.csv("energy.csv", header=FALSE)
+kinetic <- read.csv("kinetic.csv", header=FALSE)
+poten <- read.csv("poten.csv", header=FALSE)
+
+plot(energy$V2, energy$V1, type="l")
+par(new=TRUE)
+plot(kinetic$V2, kinetic$V1, type="l", axes=FALSE)
+par(new=TRUE)
+plot(poten$V2, poten$V1, type="l")
+
+plot(energy$V2, energy$V1, type="l", xlab="", ylab="", ylim=range(c(energy$V1,kinetic$V1,poten$V1)))
+par(new=TRUE)
+plot(kinetic$V2, kinetic$V1, type="l", xlab="", ylab="", axes=FALSE, ylim=range(c(energy$V1,kinetic$V1,poten$V1)))
+par(new=TRUE)
+plot(poten$V2, poten$V1, type="l", xlab="", ylab="", axes=FALSE, ylim=range(c(energy$V1,kinetic$V1,poten$V1)))
 
 #plot()
 plot(energy$V2, energy$V1, type="l", main=max(abs(energy$V1))/mean(energy$V1))
