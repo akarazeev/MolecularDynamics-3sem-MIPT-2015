@@ -14,6 +14,10 @@ plot(kinetic$V2, kinetic$V1, type="l", axes=FALSE)
 par(new=TRUE)
 plot(poten$V2, poten$V1, type="l")
 
+temp <- read.csv("temp.csv", header=FALSE)
+plot(temp$V2[100:nrow(temp)], temp$V1[100:nrow(temp)], type="l", main=mean(temp$V1[100:nrow(temp)]), xlab=max(abs(temp$V1[100:nrow(temp)]-mean(temp$V1[100:nrow(temp)])))/mean(temp$V1[100:nrow(temp)]))
+abline(a=mean(temp$V1[100:nrow(temp)]),b=0, col="red")
+
 plot(energy$V2, energy$V1, type="l", xlab="", ylab="", ylim=range(c(energy$V1,kinetic$V1,poten$V1)))
 par(new=TRUE)
 plot(kinetic$V2, kinetic$V1, type="l", xlab="", ylab="", axes=FALSE, ylim=range(c(energy$V1,kinetic$V1,poten$V1)))

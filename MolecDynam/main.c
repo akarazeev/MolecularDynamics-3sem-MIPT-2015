@@ -25,15 +25,15 @@
 
 #define PRINT_TO_FILE 1
 #define READ_INIT 0
-#define USE_BERENDSEN 1
+#define USE_BERENDSEN 0
 
 const char* READ_FROM = "MolecDynam/init_coord_N=100.xyz";
 
-const double Temp0 = 100.0;
+const double Temp0 = 103;
 const int N = 125;
 const double dt = 0.001;
-const double iterations = 5000;
-const double density = 4.0;
+const double iterations = 10000;
+const double density = 0.1;
 
 double rcut2 = 9;
 double mAr = 1;
@@ -54,7 +54,7 @@ int flag = 0;
 
 double Potential(double x) {
     if (x < rcut2) {
-        double res = 4.0 * ( (1/(float)pow(x,6)) - (1/(float)pow(x,3)) );
+        double res = 4.0 * ( (1.0/(float)powf(x,6.0)) - (1.0/(float)powf(x,3.0)) );
         return res;
     } else {
         double res = 0;
@@ -63,7 +63,7 @@ double Potential(double x) {
 }
 
 double ForceDevByRange(double x) {
-    double res = 48.0 * ( (1/(float)pow(x,7)) - (1/((float)pow(x,4) * 2)) );
+    double res = 48.0 * ( (1.0/(float)powf(x,7.0)) - (1.0/((float)powf(x,4.0) * 2.0)) );
     return res;
 }
 
@@ -159,12 +159,13 @@ void CalcTemp() {
 
 void Thermostat() {
     if (USE_BERENDSEN) {
-        double lambda = sqrt(Temp0/Temp);
+        double tau = 1;
+        double lambda = sqrt(1 + ( (dt/tau) * ((Temp0/Temp) - 1) ));
         if (fabs(Temp - Temp0) < 0.1) {
             flag = 1;
         }
         if (!flag) {
-            //            trace(lambda)
+//            trace(lambda)
             for (int i = 0; i < N; ++i) {
                 for (int k = 0; k < 3; ++k) {
                     v[i][k] *= lambda;
@@ -239,7 +240,8 @@ int main() {
         // Make Initial Velocities
         for (int i = 0; i < N; ++i) {
             for (int k = 0; k < 3; ++k) {
-                v[i][k] = 1 - (((float)rand()/(float)RAND_MAX)*2);
+//                v[i][k] = 1 - (((float)rand()/(float)RAND_MAX)*2);
+                v[i][k] = 0.1 - (((float)rand()/(float)RAND_MAX)*0.2);
             }
         }
         
@@ -306,12 +308,12 @@ int main() {
                     fprintf(f_xyz, "\n");
                 }
             }
-            if (i > 4) {
+//            if (i > 4) {
                 fprintf(f_en, "%f,%i\n", K + utot, i);
                 fprintf(f_kin, "%f,%i\n", K, i);
                 fprintf(f_poten, "%f,%i\n", utot, i);
                 fprintf(f_temp, "%f,%i\n", Temp, i);
-            }
+//            }
         }
         
         if (i*2 == iterations) {
