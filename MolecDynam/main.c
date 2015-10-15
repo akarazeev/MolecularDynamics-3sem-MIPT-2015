@@ -43,7 +43,7 @@ double m[N];
 
 int flag = 0;
 
-double Potential(double x) {
+static inline double Potential(double x) {
     if (x < rcut2) {
         double res = 4.0 * ( (1.0/(float)powf(x,6.0)) - (1.0/(float)powf(x,3.0)) );
         return res;
@@ -53,12 +53,12 @@ double Potential(double x) {
     }
 }
 
-double ForceDevByRange(double x) {
+static inline double ForceDevByRange(double x) {
     double res = 48.0 * ( (1.0/(float)powf(x,7.0)) - (1.0/((float)powf(x,4.0) * 2.0)) );
     return res;
 }
 
-void nearest_image() {
+static inline void nearest_image() {
     for (int i = 0; i < N; ++i) {
         for (int k = 0; k < 3; ++k) {
             if (r[i][k] > 0) {
@@ -70,7 +70,7 @@ void nearest_image() {
     }
 }
 
-void EqMotion() {
+static inline void EqMotion() {
     for (int i = 0; i < N; ++i) {
         for (int k = 0; k < 3; ++k) {
             //            printf("F %f\n", f[i][k]);
@@ -83,7 +83,7 @@ void EqMotion() {
     }
 }
 
-void ClearForces() {
+static inline void ClearForces() {
     for (int i = 0; i < N; ++i) {
         for (int k = 0; k < 3; ++k) {
             f[i][k] = 0;
@@ -91,7 +91,7 @@ void ClearForces() {
     }
 }
 
-void CalcForces() {
+static inline void CalcForces() {
     double rij[3];
     utot = 0;
     double r2;
@@ -123,7 +123,7 @@ void CalcForces() {
     }
 }
 
-void CalcEnergy() {
+static inline void CalcEnergy() {
     K = 0;
     double v2 = 0;
     for (int i = 0; i < N; ++i) {
@@ -138,11 +138,11 @@ void CalcEnergy() {
     }
 }
 
-void CalcTemp() {
+static inline void CalcTemp() {
     Temp = 2.0 * ((K / N) / 3.0);
 }
 
-void Thermostat(int cur_iter) {
+static inline void Thermostat(int cur_iter) {
     if (USE_BERENDSEN) {
         double tau = 0.001;
         double lambda = sqrt(1 + ( (dt/tau) * ((Temp0/Temp) - 1) ));
