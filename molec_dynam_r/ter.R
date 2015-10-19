@@ -11,8 +11,15 @@ dev.off()
 
 png('temp.png')
 #plot(temp$V2, temp$V1, type="l", main=abs(max(abs(temp$V1-mean(temp$V1)))/mean(temp$V1)))
-plot(temp$V2[100:nrow(temp)], temp$V1[100:nrow(temp)], type="l", main=mean(temp$V1[100:nrow(temp)]), xlab=max(abs(temp$V1[100:nrow(temp)]-mean(temp$V1[100:nrow(temp)])))/mean(temp$V1[100:nrow(temp)]))
-abline(a=mean(temp$V1[100:nrow(temp)]),b=0, col="red")
+step <- 0
+plot(temp$V2[step:nrow(temp)], temp$V1[step:nrow(temp)], type="l", main=mean(temp$V1[step:nrow(temp)]), xlab=max(abs(temp$V1[step:nrow(temp)]-mean(temp$V1[step:nrow(temp)])))/mean(temp$V1[step:nrow(temp)]))
+abline(a=mean(temp$V1[step:nrow(temp)]),b=0, col="red")
+dev.off()
+
+png('temp2.png')
+step <- 5000
+plot(temp$V2[step:nrow(temp)], temp$V1[step:nrow(temp)], type="l", main=mean(temp$V1[step:nrow(temp)]), xlab=max(abs(temp$V1[step:nrow(temp)]-mean(temp$V1[step:nrow(temp)])))/mean(temp$V1[step:nrow(temp)]))
+abline(a=mean(temp$V1[step:nrow(temp)]),b=0, col="red")
 dev.off()
 
 png('kinetic.png')
@@ -34,5 +41,10 @@ plot(poten$V2, poten$V1, type="l", xlab="", ylab="", axes=FALSE, ylim=range(c(en
 dev.off()
 
 png('vel.png')
-hist(vel$V1, breaks=10)
+Temp <- mean(temp$V1[(nrow(temp)/2):nrow(temp)])
+Max <- max(vel$V1)
+curve(((1/(2*Temp*pi))^(3/2))*4*pi*(x^2)*exp(-(x^2)/(2*Temp)), 0, Max, ylab='', yaxt='n', col='red')
+axis(1, col='red', col.axis='red')
+par(new=TRUE)
+hist(vel$V1)
 dev.off()

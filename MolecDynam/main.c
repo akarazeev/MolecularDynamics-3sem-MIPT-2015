@@ -17,18 +17,20 @@
 
 #define PRINT_TO_FILE 1
 #define READ_INIT 0
-#define USE_BERENDSEN 0
+#define USE_BERENDSEN 1
 
 const char* READ_FROM = "MolecDynam/init_coord_N=100.xyz";
 
-const double Temp0 = 1.3;
+const double Temp0 = 1.095;
+const double tau = 1;
 const int N = 64;
 const double dt = 0.001;
 const double iterations = 20000;
-const double density = 0.1;
+const double density = 0.88;
 
-double rcut2 = 9;
-double mAr = 1;
+const double rcut2 = 9;
+const double mAr = 1;
+
 double K = 0;
 double Temp = 0;
 double utot = 0;
@@ -44,11 +46,16 @@ double m[N];
 int flag = 0;
 
 static inline double Potential(double x) {
-    if (x < rcut2) {
-        double res = 4.0 * ( (1.0/(float)powf(x,6.0)) - (1.0/(float)powf(x,3.0)) );
-        return res;
+    if (rcut2 > 0) {
+        if (x < rcut2) {
+            double res = 4.0 * ( (1.0/(float)powf(x,6.0)) - (1.0/(float)powf(x,3.0)) );
+            return res;
+        } else {
+            double res = 0;
+            return res;
+        }
     } else {
-        double res = 0;
+        double res = 4.0 * ( (1.0/(float)powf(x,6.0)) - (1.0/(float)powf(x,3.0)) );
         return res;
     }
 }
@@ -144,13 +151,11 @@ static inline void CalcTemp() {
 
 static inline void Thermostat(int cur_iter) {
     if (USE_BERENDSEN) {
-        double tau = 0.001;
         double lambda = sqrt(1 + ( (dt/tau) * ((Temp0/Temp) - 1) ));
         if (fabs(Temp - Temp0) < 0.1 && cur_iter > 300) {
             flag = 1;
-            printf("%d\n", cur_iter);
         }
-                if (!flag) {
+        if (!flag) {
 //        if (cur_iter < iterations/2) {
             for (int i = 0; i < N; ++i) {
                 for (int k = 0; k < 3; ++k) {
@@ -168,7 +173,9 @@ int main() {
     for (int k = 0; k < 3; ++k) {
         L[k] = length;
         L2[k] = L[k]/2.0;
-        assert(L[k] > sqrt(rcut2));
+        if (rcut2 > 0) {
+            assert(L[k] > sqrt(rcut2));
+        }
     }
     for (int i = 0; i < N; ++i) {
         m[i] = mAr;
@@ -267,7 +274,6 @@ int main() {
         Thermostat(i);
         
         if (PRINT_TO_FILE) {
-            //            if (i == iterations/2) {
             if (i > iterations/2) {
                 for (int j = 0; j < N; ++j) {
                     double v2 = 0;
@@ -276,7 +282,6 @@ int main() {
                     }
                     fprintf(f_velocity, "%f\n", sqrt(v2));
                 }
-                //                fclose(f_velocity);
             }
             //            if (i > iterations-500) {
             if (i < 500) {

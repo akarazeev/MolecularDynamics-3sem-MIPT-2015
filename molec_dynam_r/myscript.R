@@ -4,6 +4,14 @@
 library("scatterplot3d", lib.loc="/Library/Frameworks/R.framework/Versions/3.1/Resources/library")
 library("rgl", lib.loc="/Library/Frameworks/R.framework/Versions/3.1/Resources/library")
 
+Temp <- 10
+curve(((1/(2*Temp*pi))^(3/2))*4*pi*(x^2)*exp(-(x^2)/(2*Temp)), 0, 10)
+
+temp <- read.csv("temp.csv", header=FALSE)
+plot(temp$V2, temp$V1, type="l", main=mean(temp$V1), xlab=max(abs(temp$V1-mean(temp$V1)))/mean(temp$V1))
+abline(a=mean(temp$V1),b=0, col="red")
+
+
 energy <- read.csv("energy.csv", header=FALSE)
 kinetic <- read.csv("kinetic.csv", header=FALSE)
 poten <- read.csv("poten.csv", header=FALSE)
@@ -13,10 +21,6 @@ par(new=TRUE)
 plot(kinetic$V2, kinetic$V1, type="l", axes=FALSE)
 par(new=TRUE)
 plot(poten$V2, poten$V1, type="l")
-
-temp <- read.csv("temp.csv", header=FALSE)
-plot(temp$V2[100:nrow(temp)], temp$V1[100:nrow(temp)], type="l", main=mean(temp$V1[100:nrow(temp)]), xlab=max(abs(temp$V1[100:nrow(temp)]-mean(temp$V1[100:nrow(temp)])))/mean(temp$V1[100:nrow(temp)]))
-abline(a=mean(temp$V1[100:nrow(temp)]),b=0, col="red")
 
 plot(energy$V2, energy$V1, type="l", xlab="", ylab="", ylim=range(c(energy$V1,kinetic$V1,poten$V1)))
 par(new=TRUE)

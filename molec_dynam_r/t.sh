@@ -6,5 +6,6 @@ r -f ter.R
 #open kinetic.png
 #open poten.png
 open temp.png
+open temp2.png
 open compare.png
 open vel.png
