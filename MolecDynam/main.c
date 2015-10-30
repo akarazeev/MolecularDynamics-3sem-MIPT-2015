@@ -21,12 +21,12 @@
 
 const char* READ_FROM = "MolecDynam/init_coord_N=100.xyz";
 
-const double Temp0 = 1.095;
+const double Temp0 = 1.4;
 const double tau = 1;
 const int N = 64;
 const double dt = 0.001;
 const double iterations = 20000;
-const double density = 0.88;
+const double density = 0.6;
 
 const double rcut2 = 9;
 const double mAr = 1;
@@ -184,14 +184,14 @@ int main() {
     FILE* f_kin;
     FILE* f_poten;
     FILE* f_temp;
-    FILE* f_xyz;
+    FILE* f_xyz = fopen("MolecDynam/t.xyz", "w");;
     FILE* f_velocity;
     FILE* f_init_coord;
     FILE* f_init_coord_r;
     if (PRINT_TO_FILE || READ_INIT) {
         f_init_coord = fopen("MolecDynam/init_coord.xyz", "w");
         f_init_coord_r = fopen(READ_FROM, "r");
-        f_xyz = fopen("MolecDynam/t.xyz", "w");
+//        f_xyz = fopen("MolecDynam/t.xyz", "w");
         f_temp = fopen("molec_dynam_r/temp.csv", "w");
         f_velocity = fopen("molec_dynam_r/velocity.csv", "w");
         f_en = fopen("molec_dynam_r/energy.csv", "w");
@@ -252,15 +252,15 @@ int main() {
             }
         } else {
             // Print Coordinates to File
-            fprintf(f_init_coord, "%d\n\n", N);
+           // fprintf(f_init_coord, "%d\n\n", N);
             for (int i = 0; i < N; ++i) {
-                fprintf(f_init_coord, "%c ", (char) (97+(i%26)));
+            //    fprintf(f_init_coord, "%c ", (char) (97+(i%26)));
                 for (int k = 0; k < 3; ++k) {
-                    fprintf(f_init_coord, "%f ", r[i][k]);
+                   // fprintf(f_init_coord, "%f ", r[i][k]);
                 }
-                fprintf(f_init_coord, "\n");
+                //fprintf(f_init_coord, "\n");
             }
-            fclose(f_init_coord);
+//            fclose(f_init_coord);
         }
     }
     
@@ -286,7 +286,7 @@ int main() {
             //            if (i > iterations-500) {
             if (i < 500) {
                 fprintf(f_xyz, "%d\n\n", N);
-                for (int i = 0; i < N; ++i) {
+		for (int i = 0; i < N; ++i) {
                     fprintf(f_xyz, "%c ", (char) (97+(i%26)));
                     for (int k = 0; k < 3; ++k) {
                         fprintf(f_xyz, "%f ", rn[i][k]);
