@@ -1,0 +1,6 @@
+*.csv
+*.xcodeproj
+.Rhistory
+.RData
+.Rproj.user/
+.Rproj.user
