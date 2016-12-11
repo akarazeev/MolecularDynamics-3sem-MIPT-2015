@@ -8,7 +8,7 @@ Temp <- mean(temp$V1[(nrow(temp)/2):nrow(temp)])
 h <- hist(vel$V1)
 par(new=TRUE)
 curve(((1/(2*Temp*pi))^(3/2))*4*pi*(x^2)*exp(-(x^2)/(2*Temp)),
-      0, max(h$breaks), ylab='', yaxt='n', col='red')
+        0, max(h$breaks), ylab='', yaxt='n', col='red')
 axis(1, col='red', col.axis='red')
 
-plot( density(vel$V1))
+plot(density(vel$V1))

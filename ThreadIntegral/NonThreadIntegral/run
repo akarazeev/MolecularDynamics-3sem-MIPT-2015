@@ -1,2 +1,0 @@
-#!/bin/sh
-gcc main.c  ; time ./a.out

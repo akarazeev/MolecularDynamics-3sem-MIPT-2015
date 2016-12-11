@@ -58,7 +58,7 @@ static inline double Potential(double x) {
     }
 }
 
-static inline double ForceDevByRange(double x) {
+static inline double ForceDivByRange(double x) {
     double res = 48.0 * ( (1.0/(float)powf(x,7.0)) - (1.0/((float)powf(x,4.0) * 2.0)) );
     return res;
 }
@@ -111,7 +111,7 @@ static inline void CalcForces() {
             }
             double f_r = 0;
             utot += Potential(r2);
-            f_r = ForceDevByRange(r2);
+            f_r = ForceDivByRange(r2);
             for (int k = 0; k < 3; ++k) {
                 assert(f_r == f_r);
                 f[i][k] += (float)f_r * (float)rij[k];
@@ -186,16 +186,16 @@ int main() {
     if (!READ_INIT) {
         // Make Initial Coordinates
         double init[3];
-        
+
         // Quantity of atoms pro line
         int quant = powf(N, 1.0/3.0);
         double step = L[0] / quant;
         double ic = (step/2.0) - L2[0];
-        
+
         for (int i = 0; i < 3; ++i) {
             init[i] = ic;
         }
-        
+
         for (int i = 0; i < N; ++i) {
             for (int k = 0; k < 3; ++k) {
                 r[i][k] = init[k];
@@ -216,7 +216,7 @@ int main() {
                 v[i][k] = 1 - (((float)rand()/(float)RAND_MAX)*2);
             }
         }
-        
+
     }
     if (PRINT_TO_FILE || READ_INIT) {
         if (READ_INIT) {
@@ -248,7 +248,7 @@ int main() {
             fclose(f_init_coord);
         }
     }
-    
+
     for (int i = 0; i < iterations; ++i) {
         nearest_image();
         ClearForces();
@@ -257,7 +257,7 @@ int main() {
         CalcEnergy();
         CalcTemp();
         Thermostat(i);
-        
+
         if (PRINT_TO_FILE) {
             if (i > iterations/2) {
                 for (int j = 0; j < N; ++j) {
@@ -283,7 +283,7 @@ int main() {
             fprintf(f_poten, "%f,%i\n", utot, i);
             fprintf(f_temp, "%f,%i\n", Temp, i);
         }
-        
+
         if (i*2 == iterations) {
             trace(Temp)
             dtrace(K, utot)
