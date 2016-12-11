@@ -1,0 +1,8 @@
+#!/bin/sh
+
+clang-omp -fopenmp main.c
+
+for (( i=0; i<10; i++ ))
+do
+{ time ./a.out; } 2>&1 | grep real | tr -d 'realms' >> t.txt
+done
