@@ -10,13 +10,7 @@ abline(a=mean(energy$V1),b=0)
 dev.off()
 
 png('images/temp.png')
-#plot(temp$V2, temp$V1, type="l", main=abs(max(abs(temp$V1-mean(temp$V1)))/mean(temp$V1)))
-step <- 0
-plot(temp$V2[step:nrow(temp)], temp$V1[step:nrow(temp)], type="l", main=mean(temp$V1[step:nrow(temp)]), xlab=max(abs(temp$V1[step:nrow(temp)]-mean(temp$V1[step:nrow(temp)])))/mean(temp$V1[step:nrow(temp)]))
-abline(a=mean(temp$V1[step:nrow(temp)]),b=0, col="red")
-dev.off()
-
-png('images/temp2.png')
+# plot(temp$V2, temp$V1, type="l", main=abs(max(abs(temp$V1-mean(temp$V1)))/mean(temp$V1)))
 step <- 0
 plot(temp$V2[step:nrow(temp)], temp$V1[step:nrow(temp)], type="l", main=mean(temp$V1[step:nrow(temp)]), xlab=max(abs(temp$V1[step:nrow(temp)]-mean(temp$V1[step:nrow(temp)])))/mean(temp$V1[step:nrow(temp)]))
 abline(a=mean(temp$V1[step:nrow(temp)]),b=0, col="red")

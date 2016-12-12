@@ -2,10 +2,9 @@
 
 r -f diagram_script.R
 open images/temp.png
-open images/temp2.png
-open images/compare.png
+# open images/compare.png
 open images/vel.png
 
-#open energy.png
-#open kinetic.png
-#open poten.png
+open images/energy.png
+open images/kinetic.png
+# open poten.png

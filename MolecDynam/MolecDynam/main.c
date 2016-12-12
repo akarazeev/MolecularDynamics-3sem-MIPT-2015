@@ -2,7 +2,7 @@
 //  main.c
 //  MolecDynam
 //
-//  Created by Anton Wetret on 17/09/15.
+//  Created by Anton Karazeev on 17/09/15.
 //  Copyright (c) 2015 Anton Karazeev. All rights reserved.
 //
 
@@ -12,23 +12,22 @@
 #include <math.h>
 #include <assert.h>
 
-#define trace(x) printf("%f\n", x);
-#define dtrace(x, y) printf("%f %f\n", x, y);
-
 #define PRINT_TO_FILE 1
-#define USE_BERENDSEN 1
+#define USE_BERENDSEN 0
+
+const int N = 343;
+const int iterations = 15000;
 
 const double Temp0 = 3;
 const double tau = 1;
-const int N = 125;
 const double dt = 0.001;
-const double iterations = 100;
 const double iter_to_write = 4000;
 const double density = 0.6;
 
 const double rcut2 = 9;
 const double mAr = 1;
 
+/* current values of each iteration */
 double K = 0;
 double Temp = 0;
 double utot = 0;
@@ -156,7 +155,9 @@ static inline void Thermostat(int cur_iter) {
 
 int main(int argc, char** argv) {
     srand((unsigned int)time(NULL));
+    // Calculate the length of the box side
     double length = powf(N/density, 1.0/3.0);
+    // Set boundaries
     for (int k = 0; k < 3; ++k) {
         L[k] = length;
         L2[k] = L[k]/2.0;
@@ -164,6 +165,7 @@ int main(int argc, char** argv) {
             assert(L[k] > sqrt(rcut2));
         }
     }
+    // Set masses for every particle
     for (int i = 0; i < N; ++i) {
         m[i] = mAr;
     }
@@ -177,7 +179,7 @@ int main(int argc, char** argv) {
     FILE* f_len;
     if (PRINT_TO_FILE) {
         f_init_coord = fopen("data/init_coord.xyz", "w");
-        f_xyz = fopen("data/t.xyz", "w");
+        f_xyz = fopen("data/coordinates.xyz", "w");
         f_temp = fopen("data/temp.csv", "w");
         f_velocity = fopen("data/velocity.csv", "w");
         f_en = fopen("data/energy.csv", "w");
@@ -185,19 +187,21 @@ int main(int argc, char** argv) {
         f_poten = fopen("data/poten.csv", "w");
         f_len = fopen("data/len.csv", "w");
     }
+    // Store length to file
     fprintf(f_len, "%f", length);
-    // Make Initial Coordinates
+    
+    /* Set Initial Coordinates */
     double init[3];
-
-    // Quantity of atoms pro line
+    // Quantity of atoms per line
     int quant = powf(N, 1.0/3.0);
+    // Step of the mesh
     double step = L[0] / quant;
     double ic = (step/2.0) - L2[0];
 
     for (int i = 0; i < 3; ++i) {
         init[i] = ic;
     }
-
+    // Set initial coordinates
     for (int i = 0; i < N; ++i) {
         for (int k = 0; k < 3; ++k) {
             r[i][k] = init[k];
@@ -212,14 +216,14 @@ int main(int argc, char** argv) {
             init[1] += step;
         }
     }
-    // Make Initial Velocities
+    // Set initial velocities
     for (int i = 0; i < N; ++i) {
         for (int k = 0; k < 3; ++k) {
             v[i][k] = 1 - (((float)rand()/(float)RAND_MAX)*2);
         }
     }
     if (PRINT_TO_FILE) {
-            // Print Initial Coordinates to File
+            // Print initial coordinates to file
             fprintf(f_init_coord, "%d\n\n", N);
             for (int i = 0; i < N; ++i) {
                 fprintf(f_init_coord, "%c ", (char) (97+(i%26)));
@@ -230,7 +234,11 @@ int main(int argc, char** argv) {
             }
             fclose(f_init_coord);
     }
-
+    
+    ///////////////
+    // Main Part //
+    ///////////////
+    
     for (int i = 0; i < iterations; ++i) {
         nearest_image();
         ClearForces();
@@ -241,6 +249,12 @@ int main(int argc, char** argv) {
         Thermostat(i);
 
         if (PRINT_TO_FILE) {
+            // Store energy and temperature to file
+            fprintf(f_en, "%f,%i\n", K + utot, i);
+            fprintf(f_kin, "%f,%i\n", K, i);
+            fprintf(f_poten, "%f,%i\n", utot, i);
+            fprintf(f_temp, "%f,%i\n", Temp, i);
+            // Store velocities to file
             if (i > iterations/2) {
                 for (int j = 0; j < N; ++j) {
                     double v2 = 0;
@@ -250,6 +264,7 @@ int main(int argc, char** argv) {
                     fprintf(f_velocity, "%f\n", sqrt(v2));
                 }
             }
+            // Store coordinates to file
             if (i < iter_to_write) {
                 fprintf(f_xyz, "%d\n\n", N);
                 for (int i = 0; i < N; ++i) {
@@ -260,18 +275,19 @@ int main(int argc, char** argv) {
                     fprintf(f_xyz, "\n");
                 }
             }
-            fprintf(f_en, "%f,%i\n", K + utot, i);
-            fprintf(f_kin, "%f,%i\n", K, i);
-            fprintf(f_poten, "%f,%i\n", utot, i);
-            fprintf(f_temp, "%f,%i\n", Temp, i);
         }
-
-        if (i*2 == iterations) {
-            trace(Temp)
-            dtrace(K, utot)
+        
+        // Print to console
+        if (i % (iterations / 10) == 0) {
+            printf(">  iter: %d\n", i);
+            printf("-> temp: %f\n", Temp);
+            printf("-> utot: %f\n", utot);
+            printf("-> K: %f\n", K);
+            printf("\n");
         }
         assert(K != INFINITY);
     }
+    
     if (PRINT_TO_FILE) {
         fclose(f_velocity);
         fclose(f_xyz);
@@ -282,6 +298,8 @@ int main(int argc, char** argv) {
         fclose(f_len);
         printf("Print to file: Done!\n");
     }
+    
     printf("Result: Done!\n");
+    
     return 0;
 }
