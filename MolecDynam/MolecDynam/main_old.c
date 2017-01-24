@@ -2,8 +2,8 @@
 //  main.c
 //  MolecDynam
 //
-//  Created by Anton Karazeev on 23/01/17.
-//  Copyright (c) 2017 Anton Karazeev. All rights reserved.
+//  Created by Anton Karazeev on 17/09/15.
+//  Copyright (c) 2015 Anton Karazeev. All rights reserved.
 //
 
 #include <stdio.h>
@@ -12,26 +12,37 @@
 #include <math.h>
 #include <assert.h>
 
-const int npart = 512;
-const int iterations = 10000;
-const double iter_to_write = iterations;
+#define USE_BERENDSEN 0
 
-const double Temp0 = 1.5043;
+const int npart = 125;
+const int iterations = 3000;
+
+// const double Temp0 = 0.1;
+// const double dt = 0.001;
+// const double density = 0.316;
+
+// const double Temp0 = 1.05;
+// const double dt = 0.005;
+// const double density = 0.6;
+
+// const double Temp0 = 0.728;
+const double Temp0 = 0.728;
 const double dt = 0.001;
 const double density = 0.8442;
 
+const double eps = 1.0;
+
+const double tau = 1;
+const double iter_to_write = iterations;
+
+double rcut2 = 9;
 const double max_vel = 1;
 const double mAr = 1;
-const int nhis = 50; // number of bins
-double g[nhis];
-int ngr;
-
-double rcut2 = -1; // init in main()
 
 /* current values of each iteration */
 double K = 0;
 double Temp = 0;
-double etot = 0;
+double utot = 0;
 double virial = 0;
 double press = 0;
 double volume = 0;
@@ -47,6 +58,26 @@ double L2[3];
 double L[3];
 double m[npart];
 
+/* to switch on/off the thermostat */
+int flag = 0;
+
+static inline double Potential(double r2) {
+    if (r2 < rcut2 || rcut2 == 0) {
+        double res = 4.0 * ( (1.0/(float)powf(r2, 6.0)) - (1.0/(float)powf(r2, 3.0)) );
+        // double res = exp(-sqrt(r2)) - (4.0/(float)r2) + (5.0/powf(r2, 3.0/2.0)) - (10.0/powf(r2, 5.0));
+        return res;
+    } else {
+        double res = 0;
+        return res;
+    }
+}
+
+static inline double ForceDivByRange(double r2) {
+    double res = 48.0 * ( (1.0/(float)powf(r2, 7.0)) - (1.0/((float)powf(r2, 4.0) * 2.0)) );
+    // double res = -exp(-sqrt(r2)) + (8.0/powf(r2, 3.0/2.0)) - (15.0/powf(r2, 2.0)) + (100.0/powf(r2, 11.0/2.0));
+    return res;
+}
+
 static inline void NearestImage() {
     for (int i = 0; i < npart; ++i) {
         for (int k = 0; k < 3; ++k) {
@@ -59,14 +90,17 @@ static inline void NearestImage() {
     }
 }
 
-static inline void CalcForces() {
+static inline void ClearForces() {
     for (int i = 0; i < npart; ++i) {
         for (int k = 0; k < 3; ++k) {
             f[i][k] = 0;
         }
     }
+}
+
+static inline void CalcForces() {
     double rij[3];
-    etot = 0;
+    utot = 0;
     double r2 = 0;
     virial = 0;
     for (int i = 0; i < npart-1; ++i) {
@@ -77,6 +111,7 @@ static inline void CalcForces() {
                 rij[k] -= (float)length * round(rij[k]/length);
                 r2 += powf(rij[k], 2.0);
             }
+            double f_r = 0;
             double r2i = 0;
             double r6i = 0;
             double ff = 0;
@@ -84,9 +119,8 @@ static inline void CalcForces() {
                 r2i = 1.0/(float)r2;
                 r6i = powf(r2i, 3.0);
                 ff = 48.0 * r2i * r6i * (r6i - 0.5);
-                virial += r2 * ff;
-                etot += 4.0 * r6i * (r6i - 1.0);
-                etot -= ecut;
+                utot += 4.0 * r6i * (r6i - 1.0);
+                utot -= ecut;
             }
             for (int k = 0; k < 3; ++k) {
                 assert(ff == ff);
@@ -95,91 +129,95 @@ static inline void CalcForces() {
             }
         }
     }
+    for (int i = 0; i < npart; ++i) {
+        for (int k = 0; k < 3; ++k) {
+            virial += (float)f[i][k] * (float)r[i][k];
+        }
+    }
+    virial = (float)virial / (float)npart;
+    // virial = (float)virial / 3.0;
+    // double rij[3];
+    // utot = 0;
+    // double r2 = 0;
+    // virial = 0;
+    // for (int i = 1; i < npart; ++i) {
+    //     for (int j = 0; j < i; ++j) {
+    //         r2 = 0;
+    //         for (int k = 0; k < 3; ++k) {
+    //             rij[k] = rn[i][k] - rn[j][k];
+    //             if (rij[k] > L2[k]) {
+    //                 rij[k] -= L[k];
+    //             } else if (rij[k] < -L2[k]) {
+    //                 rij[k] += L[k];
+    //             }
+    //             r2 += powf(rij[k], 2.0);
+    //         }
+    //         double f_r = 0;
+    //         utot += Potential(r2);
+    //         // printf("Potential: %f\n", Potential(r2));
+    //         f_r = ForceDivByRange(r2);
+    //         for (int k = 0; k < 3; ++k) {
+    //             assert(f_r == f_r);
+    //             f[i][k] += (float)f_r * (float)rij[k];
+    //             f[j][k] -= (float)f_r * (float)rij[k];
+    //         }
+    //     }
+    // }
+    // for (int i = 0; i < npart; ++i) {
+    //     for (int k = 0; k < 3; ++k) {
+    //         virial += (float)f[i][k] * (float)r[i][k];
+    //     }
+    // }
+    // virial = (float)virial / (float)npart;
+    // // virial = (float)virial / 3.0;
 }
 
 static inline void EqMotion() {
-    // double xx = 0;
-    // double sumv2 = 0;
-    // for (int i = 0; i < npart; ++i) {
-    //     for (int k = 0; k < 3; ++k) {
-    //         xx = (2.0 * (float)r[i][k]) - (float)rm[i][k] + ((float)powf(dt, 2.0) * ((float)f[i][k] / (float)m[i]));
-    //         v[i][k] = ((float)xx - (float)rm[i][k]) / (2.0 * (float)dt);
-    //         sumv2 += powf(v[i][k], 2.0);
-    //     }
-    // }
-    // Temp = (float)sumv2 / ((float)npart * 3.0);
-    // double alpha = sqrt((float)Temp / (float)Temp0);
-    // sumv2 = 0;
-    // for (int i = 0; i < npart; ++i) {
-    //     for (int k = 0; k < 3; ++k) {
-    //         v[i][k] = (float)v[i][k] / (float)alpha;
-    //         xx = (2.0 * dt * v[i][k]) + rm[i][k];
-    //         sumv2 += powf(v[i][k], 2.0);
-    //         rm[i][k] = r[i][k];
-    //         r[i][k] = xx;
-    //     }
-    // }
-    // Temp = (float)sumv2 / ((float)npart * 3.0);
-    // etot = (float)(etot + ((float)sumv2 / 2.0)) / (float)npart;
-    // K = (float)sumv2 / ((float)npart * 2.0);
-    // ^ constant Temperature
     double xx = 0;
-    double sumv2 = 0;
     for (int i = 0; i < npart; ++i) {
         for (int k = 0; k < 3; ++k) {
             xx = (2.0 * (float)r[i][k]) - (float)rm[i][k] + ((float)powf(dt, 2.0) * ((float)f[i][k] / (float)m[i]));
             v[i][k] = ((float)xx - (float)rm[i][k]) / (2.0 * (float)dt);
-            sumv2 += powf(v[i][k], 2.0);
             rm[i][k] = r[i][k];
             r[i][k] = xx;
         }
     }
-    Temp = (float)sumv2 / ((float)npart * 3.0);
-    etot = (float)(etot + ((float)sumv2 / 2.0)) / (float)npart;
-    K = (float)sumv2 / ((float)npart * 2.0);
 }
 
-static inline void CalcPress() {
-    virial = (float)virial / (float)npart;
+static inline void CalcEnergy() {
+    K = 0;
+    double v2 = 0;
+    for (int i = 0; i < npart; ++i) {
+        v2 = 0;
+        for (int k = 0; k < 3; ++k) {
+            v2 += powf((float)v[i][k], 2.0);
+        }
+        K += (float)m[i] * ((float)v2 / 2.0);
+        assert(K != INFINITY);
+    }
+}
 
+static inline void CalcTempPress() {
+    Temp = (2.0 * K) / (npart * 3.0);
+    // Calculate Pressure
     // press = ((float)density * (float)Temp) + ((float)virial / (3.0 * (float)volume));
-    press = (density * (Temp + virial)) / 3.0;
-    // printf("1: %f\n", (float)density * (float)Temp);
-    // printf("2: %f\n", ((float)virial / (3.0 * (float)volume)));
-    // printf("press: %f\n", press);
+    press = ((float)density * (float)Temp) + ((float)virial / ((float)volume));
 }
 
-static inline void RadDistr() {
-
-    double delg = (float)length / (2.0 * (float)nhis);
-
-    ngr += 1;
-    double rij[3];
-    double r1 = 0;
-    double r2 = 0;
-    int ig = 0;
-    for (int i = 0; i < npart-1; ++i) {
-        for (int j = i+1; j < npart; ++j) {
-            r2 = 0;
-            for (int k = 0; k < 3; ++k) {
-                rij[k] = r[i][k] - r[j][k];
-                rij[k] -= (float)length * round(rij[k]/length);
-                r2 += powf(rij[k], 2.0);
-            }
-            r1 = sqrt(r2);
-            if (r1 < (float)length/2.0) {
-                ig = round((float)r1/(float)delg);
-                g[ig] += 2;
+static inline void Thermostat(int cur_iter) {
+    if (USE_BERENDSEN) {
+        double lambda = sqrt(1 + ( (dt/tau) * ((Temp0/Temp) - 1) ));
+        if (fabs(Temp - Temp0) < 0.1 && cur_iter > 1000) {
+            // flag = 1;
+        }
+        if (!flag) {
+            // puts("lol");
+            for (int i = 0; i < npart; ++i) {
+                for (int k = 0; k < 3; ++k) {
+                    v[i][k] *= lambda;
+                }
             }
         }
-    }
-    double vb;
-    double nid;
-    for (int i = 0; i < nhis; ++i) {
-        r1 = delg * (i + 0.5);
-        vb = ( powf((i+1), 3) - powf(i, 3)) * powf(delg, 3);
-        nid = (4.0/3.0) * 3.14159 * vb * density;
-        g[i] = (float)g[i] / (float)(ngr * npart * nid);
     }
 }
 
@@ -187,18 +225,10 @@ int main(int argc, char** argv) {
     srand((unsigned int)time(NULL));
     // Calculate the length of the box side
     length = powf((float)npart/(float)density, 1.0/3.0);
-    volume = powf((float)length, 3.0);
-    if (rcut2 <= 0) {
-        rcut2 = 0.9 * powf((float)length / 2.0, 2.0);
-    }
+    volume = powf(length, 3.0);
+    rcut2 = powf(length / 2.0, 2.0);
     double rcut2i = 1.0 / rcut2;
     ecut = 4.0 * (powf(rcut2i, 6) - powf(rcut2i, 3));
-
-    ngr = 0;
-    for (int k = 0; k < nhis; ++k) {
-        g[k] = 0;
-    }
-
     int width = 11;
     puts("+--------------------");
     printf("| %-*s %d\n", width, "npart:", npart);
@@ -231,8 +261,6 @@ int main(int argc, char** argv) {
     FILE* f_len;
     FILE* f_press;
     FILE* f_vir;
-    FILE* f_raddistr;
-    FILE* f_dens;
 
     f_init_coord = fopen("data/init_coord.xyz", "w");
     f_xyz = fopen("data/coordinates.xyz", "w");
@@ -246,13 +274,9 @@ int main(int argc, char** argv) {
     f_len = fopen("data/len.csv", "w");
     f_press = fopen("data/press.csv", "w");
     f_vir = fopen("data/vir.csv", "w");
-    f_dens = fopen("data/rho.csv", "w");
-    f_raddistr = fopen("data/raddistr.csv", "w");
+
     // Print length to file
     fprintf(f_len, "%f", length);
-    fclose(f_len);
-    fprintf(f_dens, "%f", density);
-    fclose(f_dens);
 
     // Print Initial Coordinates ot file
     double init[3];
@@ -263,9 +287,11 @@ int main(int argc, char** argv) {
     printf("| %-*s %f\n", width, "step:", step);
     puts("+--------------------");
     double ic = (step/2.0) - L2[0];
+
     for (int i = 0; i < 3; ++i) {
         init[i] = ic;
     }
+
     // Set initial coordinates
     for (int i = 0; i < npart; ++i) {
         for (int k = 0; k < 3; ++k) {
@@ -293,30 +319,23 @@ int main(int argc, char** argv) {
     fclose(f_init_coord);
 
     // Set initial velocities and Print initial velocities to file
-    // double sumv = 0;
-    double sumv[3];
-    for (int k = 0; k < 3; ++k) {
-        sumv[k] = 0;
-    }
+    double sumv = 0;
     double sumv2 = 0;
     for (int i = 0; i < npart; ++i) {
         for (int k = 0; k < 3; ++k) {
-            v[i][k] = ((float)rand() / (float)RAND_MAX) - 0.5;
+            v[i][k] = (1 - (((float)rand()/(float)RAND_MAX) * 2)) * max_vel;
             sumv2 += powf(v[i][k], 2.0);
-            sumv[k] += v[i][k];
+            sumv += v[i][k];
         }
     }
-    for (int k = 0; k < 3; ++k) {
-        sumv[k] = (float)sumv[k] / (float)npart;
-    }
-    sumv2 = sumv2 / (float)npart;
-
+    sumv = sumv / (3.0 * (float)npart);
+    sumv2 = sumv2 / ((float)npart);
     double scale_factor = sqrt(3.0 * Temp0 / (float)sumv2);
     sumv2 = 0;
     for (int i = 0; i < npart; ++i) {
         double v2 = 0;
         for (int k = 0; k < 3; ++k) {
-            v[i][k] = (v[i][k] - sumv[k]) * scale_factor;
+            v[i][k] = (v[i][k] - sumv) * scale_factor;
             rm[i][k] = r[i][k] - (v[i][k] * dt);
             v2 += powf((float)v[i][k], 2);
             fprintf(f_init_vel_nosq, "%f\n", v[i][k]);
@@ -329,19 +348,22 @@ int main(int argc, char** argv) {
     fclose(f_init_vel_nosq);
     fclose(f_init_vel);
 
-    /////////////////////////////////////////////////////////////////
-    ////////////////////// Main Part ////////////////////////////////
-    /////////////////////////////////////////////////////////////////
+    ///////////////
+    // Main Part //
+    ///////////////
 
     for (int i = 0; i < iterations; ++i) {
-        NearestImage();
+        // NearestImage();
+        ClearForces();
         CalcForces();
         EqMotion();
-        CalcPress();
+        CalcEnergy();
+        CalcTempPress();
+        // Thermostat(i);
         // Print energy and temperature to file
-        fprintf(f_en, "%f,%i\n", etot, i);
-        fprintf(f_kin, "%f,%i\n", K, i);
-        fprintf(f_poten, "%f,%i\n", etot - K, i);
+        fprintf(f_en, "%f,%i\n", (float)(K + utot)/(float)npart, i);
+        fprintf(f_kin, "%f,%i\n", (float)K/(float)npart, i);
+        fprintf(f_poten, "%f,%i\n", (float)utot/(float)npart, i);
         fprintf(f_temp, "%f,%i\n", Temp, i);
         fprintf(f_press, "%f,%i\n", press, i);
         fprintf(f_vir, "%f,%i\n", virial, i);
@@ -377,7 +399,7 @@ int main(int argc, char** argv) {
         if (i % (iterations / 5) == 0) {
             printf(">  iter: %d\n", i);
             printf("-> temp: %f\n", Temp);
-            printf("-> etot: %f\n", etot);
+            printf("-> utot: %f\n", utot);
             printf("-> K: %f\n", K);
             printf("-> press: %f\n", press);
             printf("\n");
@@ -385,20 +407,17 @@ int main(int argc, char** argv) {
         assert(K != INFINITY);
     }
 
-    RadDistr();
-    for (int i = 0; i < nhis; ++i) {
-        fprintf(f_raddistr, "%f,%i\n", g[i], i);
-    }
-
-    fclose(f_raddistr);
     fclose(f_vel);
     fclose(f_xyz);
     fclose(f_en);
     fclose(f_poten);
     fclose(f_kin);
     fclose(f_temp);
+    fclose(f_len);
     fclose(f_press);
     fclose(f_vir);
+
+    printf("Print to file: Done!\n");
 
     printf("Result: Done!\n");
 
