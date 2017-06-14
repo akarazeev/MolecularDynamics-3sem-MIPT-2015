@@ -15,13 +15,13 @@
 #define PRINT_TO_FILE 1
 #define USE_BERENDSEN 0
 
-const int N = 343;
-const int iterations = 15000;
+const int N = 64;
+const int iterations = 10000;
 
 const double Temp0 = 3;
 const double tau = 1;
 const double dt = 0.001;
-const double iter_to_write = 4000;
+const double iter_to_write = iterations;
 const double density = 0.6;
 
 const double rcut2 = 9;
@@ -189,7 +189,7 @@ int main(int argc, char** argv) {
     }
     // Store length to file
     fprintf(f_len, "%f", length);
-    
+
     /* Set Initial Coordinates */
     double init[3];
     // Quantity of atoms per line
@@ -234,11 +234,11 @@ int main(int argc, char** argv) {
             }
             fclose(f_init_coord);
     }
-    
+
     ///////////////
     // Main Part //
     ///////////////
-    
+
     for (int i = 0; i < iterations; ++i) {
         nearest_image();
         ClearForces();
@@ -276,7 +276,7 @@ int main(int argc, char** argv) {
                 }
             }
         }
-        
+
         // Print to console
         if (i % (iterations / 10) == 0) {
             printf(">  iter: %d\n", i);
@@ -287,7 +287,7 @@ int main(int argc, char** argv) {
         }
         assert(K != INFINITY);
     }
-    
+
     if (PRINT_TO_FILE) {
         fclose(f_velocity);
         fclose(f_xyz);
@@ -298,8 +298,8 @@ int main(int argc, char** argv) {
         fclose(f_len);
         printf("Print to file: Done!\n");
     }
-    
+
     printf("Result: Done!\n");
-    
+
     return 0;
 }
