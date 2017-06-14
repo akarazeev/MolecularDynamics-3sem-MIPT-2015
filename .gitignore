@@ -2,7 +2,6 @@
 *.xyz
 *.xcodeproj
 *.out
-*.png
 *.Rhistory
 *.RData
 *.Rproj.user/
@@ -10,6 +9,5 @@
 *.Rproj
 *.Rproj/
 *.ipynb_checkpoints
-*.pdf
 
 *tmp
