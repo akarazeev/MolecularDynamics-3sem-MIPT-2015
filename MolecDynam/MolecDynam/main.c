@@ -16,9 +16,14 @@ const int npart = 512;
 const int iterations = 10000;
 const double iter_to_write = iterations;
 
-const double Temp0 = 1.5043;
+const int N = 64;
+const int iterations = 10000;
+
+const double Temp0 = 3;
+const double tau = 1;
 const double dt = 0.001;
-const double density = 0.8442;
+const double iter_to_write = iterations;
+const double density = 0.6;
 
 const double max_vel = 1;
 const double mAr = 1;
@@ -248,13 +253,15 @@ int main(int argc, char** argv) {
     f_vir = fopen("data/vir.csv", "w");
     f_dens = fopen("data/rho.csv", "w");
     f_raddistr = fopen("data/raddistr.csv", "w");
+  
     // Print length to file
     fprintf(f_len, "%f", length);
     fclose(f_len);
     fprintf(f_dens, "%f", density);
     fclose(f_dens);
 
-    // Print Initial Coordinates ot file
+
+    /* Set Initial Coordinates */
     double init[3];
     // Quantity of atoms per line
     int quant = powf(npart, 1.0/3.0);
@@ -324,6 +331,7 @@ int main(int argc, char** argv) {
         sumv2 += v2;
         fprintf(f_init_vel, "%f\n", v2);
     }
+
     printf("v2: %f\n", sumv2);
     printf("temp: %f\n", sumv2/(npart * 3.0));
     fclose(f_init_vel_nosq);
