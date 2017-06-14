@@ -10,3 +10,6 @@
 *.Rproj
 *.Rproj/
 *.ipynb_checkpoints
+*.pdf
+
+*tmp

@@ -1,0 +1,65 @@
+# turn on lights 0 and 1
+#light 0 on
+#light 1 on
+#light 2 off
+#light 3 off
+
+# position the stage and axes
+axes location off
+stage location off
+
+# position and turn on menus
+menu main on
+menu graphics on
+menu files on
+
+menu main move 5 600
+menu files move 800 50
+menu graphics move 613 139
+
+mol modstyle 0 0 points 10
+
+proc box_molecule {molid} {
+      # get the min and max values for each of the directions
+      # (I'm not sure if this is the best way ... )
+      set sel [atomselect top all]
+
+      set fo [open "data/len.csv" "r"]
+      set len [read $fo]
+      set len [expr { $len/ 2 }]
+      close $fo
+
+      set coords [lsort -real [$sel get x]]
+      set minx -$len
+      set maxx $len
+
+      set coords [lsort -real [$sel get y]]
+      set miny -$len
+      set maxy $len
+
+      set coords [lsort -real [$sel get z]]
+      set minz -$len
+      set maxz $len
+
+      # and draw the lines
+      draw materials off
+      draw color yellow
+      draw line "$minx $miny $minz" "$maxx $miny $minz"
+      draw line "$minx $miny $minz" "$minx $maxy $minz"
+      draw line "$minx $miny $minz" "$minx $miny $maxz"
+
+      draw line "$maxx $miny $minz" "$maxx $maxy $minz"
+      draw line "$maxx $miny $minz" "$maxx $miny $maxz"
+
+      draw line "$minx $maxy $minz" "$maxx $maxy $minz"
+      draw line "$minx $maxy $minz" "$minx $maxy $maxz"
+
+      draw line "$minx $miny $maxz" "$maxx $miny $maxz"
+      draw line "$minx $miny $maxz" "$minx $maxy $maxz"
+
+      draw line "$maxx $maxy $maxz" "$maxx $maxy $minz"
+      draw line "$maxx $maxy $maxz" "$minx $maxy $maxz"
+      draw line "$maxx $maxy $maxz" "$maxx $miny $maxz"
+}
+
+box_molecule top

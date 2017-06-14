@@ -16,15 +16,12 @@
 #define dtrace(x, y) printf("%f %f\n", x, y);
 
 #define PRINT_TO_FILE 1
-#define READ_INIT 0
 #define USE_BERENDSEN 0
-
-const char* READ_FROM = "MolecDynam/init_coord_N=100.xyz";
 
 const double length = 30;
 const double Temp0 = 103;
 const int N = 2;
-const double dt = 0.001;
+const double dt = 0.0006;
 const double iterations = 10000;
 const double density = 0.1;
 
@@ -177,10 +174,10 @@ int main() {
         L2[k] = L[k]/2.0;
 //        assert(L[k] > sqrt(rcut2));
     }
-    
+
     m[0] = 1000000;
     m[1] = 1;
-    
+
 //    for (int i = 0; i < N; ++i) {
 //        m[i] = mAr;
 //    }
@@ -191,12 +188,10 @@ int main() {
     FILE* f_xyz;
     FILE* f_velocity;
     FILE* f_init_coord;
-    FILE* f_init_coord_r;
     FILE* f_len;
-    if (PRINT_TO_FILE || READ_INIT) {
+    if (PRINT_TO_FILE) {
         f_init_coord = fopen("data/init_coord.xyz", "w");
-        f_init_coord_r = fopen(READ_FROM, "r");
-        f_xyz = fopen("data/t.xyz", "w");
+        f_xyz = fopen("data/coordinates.xyz", "w");
         f_temp = fopen("data/temp.csv", "w");
         f_velocity = fopen("data/velocity.csv", "w");
         f_en = fopen("data/energy.csv", "w");
@@ -206,58 +201,37 @@ int main() {
         fprintf(f_len, "%f", length);
         fclose(f_len);
     }
-    if (!READ_INIT) {
-        
-        for (int i = 0; i < N; ++i) {
-            for (int k = 0; k < 3; ++k) {
-                r[i][k] = 0;
-            }
-        }
-        
-        r[1][0] = 1.2;
-        
-        // Make Initial Velocities
-        for (int i = 0; i < N; ++i) {
-            for (int k = 0; k < 3; ++k) {
-                v[i][k] = 0;
-            }
-        }
-        
-        v[1][0] = -30;
-        v[1][1] = -30;
-        
-    }
-    if (PRINT_TO_FILE || READ_INIT) {
-        if (READ_INIT) {
-            // Read Initial Coordinates
-            double tmp;
-            fscanf(f_init_coord_r, "%lf", &tmp);
-            assert(tmp == N);
-            fscanf(f_init_coord_r, "%lf", &tmp);
-            for (int i = 0; i < N; ++i) {
-                char c;
-                fscanf(f_init_coord_r, "%c", &c);
-                for (int k = 0; k < 3; ++k) {
-                    fscanf(f_init_coord_r, "%lf", &tmp);
-                    r[i][k] = tmp;
-                }
-                fscanf(f_init_coord_r, "%c", &c);
-                fscanf(f_init_coord_r, "%c", &c);
-            }
-        } else {
-            // Print Coordinates to File
-            fprintf(f_init_coord, "%d\n\n", N);
-            for (int i = 0; i < N; ++i) {
-                fprintf(f_init_coord, "%c ", (char) (97+(i%26)));
-                for (int k = 0; k < 3; ++k) {
-                    fprintf(f_init_coord, "%f ", r[i][k]);
-                }
-                fprintf(f_init_coord, "\n");
-            }
-            fclose(f_init_coord);
+    for (int i = 0; i < N; ++i) {
+        for (int k = 0; k < 3; ++k) {
+            r[i][k] = 0;
         }
     }
-    
+
+    r[1][0] = 1.2;
+
+    // Make Initial Velocities
+    for (int i = 0; i < N; ++i) {
+        for (int k = 0; k < 3; ++k) {
+            v[i][k] = 0;
+        }
+    }
+
+    v[1][0] = -100;
+    v[1][1] = -66.876615;
+
+    if (PRINT_TO_FILE ) {
+        // Print Coordinates to File
+        fprintf(f_init_coord, "%d\n\n", N);
+        for (int i = 0; i < N; ++i) {
+            fprintf(f_init_coord, "%c ", (char) (97+(i%26)));
+            for (int k = 0; k < 3; ++k) {
+                fprintf(f_init_coord, "%f ", r[i][k]);
+            }
+            fprintf(f_init_coord, "\n");
+        }
+        fclose(f_init_coord);
+    }
+
     for (int i = 0; i < iterations; ++i) {
         nearest_image();
         ClearForces();
@@ -266,7 +240,7 @@ int main() {
 //        CalcEnergy();
         CalcTemp();
         Thermostat();
-        
+
         if (PRINT_TO_FILE) {
             if (i == iterations/2) {
                 for (int j = 0; j < N; ++j) {
@@ -279,7 +253,7 @@ int main() {
                 fclose(f_velocity);
             }
             //            if (i > iterations-500) {
-            if (i < 60) {
+            if (i < 300) {
                 fprintf(f_xyz, "%d\n\n", N);
                 for (int i = 0; i < N; ++i) {
                     fprintf(f_xyz, "%c ", (char) (97+(i%26)));
@@ -296,7 +270,7 @@ int main() {
             fprintf(f_temp, "%f,%i\n", Temp, i);
             //            }
         }
-        
+
         if (i*2 == iterations) {
             trace(Temp)
             dtrace(K, utot)
@@ -310,7 +284,6 @@ int main() {
         fclose(f_en);
         fclose(f_poten);
         fclose(f_kin);
-        fclose(f_init_coord_r);
         fclose(f_temp);
         printf("Print to file: Done!\n");
     }
